@@ -113,7 +113,8 @@ bool BaseServer::WorkProcess()
             
             case EOperationType::ACCEPT:
             {
-                user_key = static_cast<SOCKET>(overExtend->m_wsaBuffer.len);
+
+                user_key = overExtend->m_socket;
                 std::cout << "ACCEPT Player "<< user_key << std::endl;
 
                 AddNewClient(user_key);
