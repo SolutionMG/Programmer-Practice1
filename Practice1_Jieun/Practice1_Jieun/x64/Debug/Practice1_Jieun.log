@@ -1,9 +1,2 @@
-﻿  pch.cpp
-  BaseServer.cpp
-  ChattingRoom.cpp
-  PlayerInfo.cpp
-  MainProcess.cpp
-  Room.cpp
-  코드를 생성하고 있습니다...
-  LINK : C:\Users\jieun.kim23\Desktop\Mission\Practice1_Jieun\x64\Debug\Practice1_Jieun.exe을(를) 찾을 수 없거나 마지막 증분 링크에 의해 빌드되지 않았습니다. 전체 링크를 수행하고 있습니다.
+﻿  BaseServer.cpp
   Practice1_Jieun.vcxproj -> C:\Users\jieun.kim23\Desktop\Mission\Practice1_Jieun\x64\Debug\Practice1_Jieun.exe

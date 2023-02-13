@@ -139,6 +139,7 @@
   <ItemGroup>
     <ClCompile Include="BaseServer.cpp" />
     <ClCompile Include="ChattingRoom.cpp" />
+    <ClCompile Include="ClientInfo.cpp" />
     <ClCompile Include="PlayerInfo.cpp" />
     <ClCompile Include="MainProcess.cpp" />
     <ClCompile Include="pch.cpp">
@@ -152,6 +153,8 @@
   <ItemGroup>
     <ClInclude Include="BaseServer.h" />
     <ClInclude Include="ChattingRoom.h" />
+    <ClInclude Include="ClientInfo.h" />
+    <ClInclude Include="Define.h" />
     <ClInclude Include="PlayerInfo.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Room.h" />

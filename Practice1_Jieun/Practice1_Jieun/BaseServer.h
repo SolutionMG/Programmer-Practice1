@@ -1,51 +1,41 @@
 #ifndef BASESERVER_H
 #define BASESERVER_H
 
-constexpr int MAX_BUFFERSIZE = 1024;
-constexpr int SERVERPORT = 9000;
-
 class PlayerInfo;
 
-///OPERATION TYPE
-enum class EOperationType : char
+class BaseServer final
 {
-	RECV, SEND, ACCEPT, END
-};
+private:
+	static SOCKET m_listenSocket;
+	static HANDLE ms_iocpHandle;
 
-///EXTEND OVERLAPPED
-struct WSAOVERLAPPED_EXTEND
-{
-	WSAOVERLAPPED	m_over;
-	WSABUF			m_wsaBuffer[1];
-	unsigned char	m_networkBuffer[MAX_BUFFERSIZE];
-	EOperationType	m_opType;
-	SOCKET			m_socket;
-};
+	/// 플레이어 관리용 변수
+	static std::unordered_map<SOCKET, PlayerInfo*> m_players;
 
-class BaseServer
-{
 public:
 	explicit BaseServer();
 	virtual ~BaseServer();
 
 public:
 	bool Initialize();
-	bool RunServer();
-
-	bool WorkProcess();
-
-public:
 	bool Listen();
-	bool Accept(WSAOVERLAPPED_EXTEND* over);
-	bool Receive(int playerIndex);
-	bool Disconnect(int playerIndex);
-
-public:
-	void DisplayError(const char* msg);
+	bool OpenServer();
 
 private:
-	SOCKET m_listenSocket;
-	std::unordered_map<unsigned int, PlayerInfo*> m_players;
+	bool Disconnect(SOCKET socket);
+
+	static bool WorkProcess();
+	static bool PacketReassembly(unsigned char* packet, DWORD bytes, SOCKET socket);
+
+	static bool Accept(WSAOVERLAPPED_EXTEND* over);
+	static bool ReceivePacket(SOCKET socket);
+	static bool SendPacket(SOCKET socket, void* data, unsigned short packetSize);
+
+	static bool AddNewClient(SOCKET socket);
+
+
+public:
+	static void DisplayError(const char* msg);
 };
 
 

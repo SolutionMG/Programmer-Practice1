@@ -3,13 +3,14 @@
 
 class Room
 {
+private:
+	/// 방 번호
+	int m_index;
+
 public:
 	explicit Room();
 	virtual ~Room();
 
-private:
-	/// 방 번호
-	int m_index;
 };
 
 #endif // !ROOM_H

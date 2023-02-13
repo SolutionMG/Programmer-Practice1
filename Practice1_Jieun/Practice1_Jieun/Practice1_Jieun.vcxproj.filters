@@ -13,11 +13,14 @@
     <Filter Include="03.Room">
       <UniqueIdentifier>{0b9fc2d0-94d3-4df2-a666-a639ab27e854}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02.Player">
+    <Filter Include="03.Room\00.ChattingRoom">
+      <UniqueIdentifier>{b35ea6a9-5f8a-491e-a580-0e3e38171059}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02.Client">
       <UniqueIdentifier>{6cc128d7-2697-4cf3-aa4d-3070243eca28}</UniqueIdentifier>
     </Filter>
-    <Filter Include="03.Room\ChattingRoom">
-      <UniqueIdentifier>{b35ea6a9-5f8a-491e-a580-0e3e38171059}</UniqueIdentifier>
+    <Filter Include="02.Client\00.PlayerInfo">
+      <UniqueIdentifier>{fd48a4ef-8c2c-47ee-801a-496b1f646843}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -30,14 +33,17 @@
     <ClCompile Include="BaseServer.cpp">
       <Filter>01.BaseServer</Filter>
     </ClCompile>
-    <ClCompile Include="PlayerInfo.cpp">
-      <Filter>02.Player</Filter>
-    </ClCompile>
     <ClCompile Include="Room.cpp">
       <Filter>03.Room</Filter>
     </ClCompile>
     <ClCompile Include="ChattingRoom.cpp">
-      <Filter>03.Room\ChattingRoom</Filter>
+      <Filter>03.Room\00.ChattingRoom</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerInfo.cpp">
+      <Filter>02.Client\00.PlayerInfo</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientInfo.cpp">
+      <Filter>02.Client</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -47,14 +53,20 @@
     <ClInclude Include="BaseServer.h">
       <Filter>01.BaseServer</Filter>
     </ClInclude>
-    <ClInclude Include="PlayerInfo.h">
-      <Filter>02.Player</Filter>
-    </ClInclude>
     <ClInclude Include="Room.h">
       <Filter>03.Room</Filter>
     </ClInclude>
     <ClInclude Include="ChattingRoom.h">
-      <Filter>03.Room\ChattingRoom</Filter>
+      <Filter>03.Room\00.ChattingRoom</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerInfo.h">
+      <Filter>02.Client\00.PlayerInfo</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientInfo.h">
+      <Filter>02.Client</Filter>
+    </ClInclude>
+    <ClInclude Include="Define.h">
+      <Filter>99.Header</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

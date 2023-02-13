@@ -1,19 +1,24 @@
 #ifndef PLAYERINFO_H
 #define PLAYERINFO_H
+#include "ClientInfo.h"
 
-constexpr int MAX_NAME = 16;
-
-class PlayerInfo
+class PlayerInfo : public ClientInfo
 {
+private:
+	///플레이어 고유 이름
+	char m_name[MAX_NAME];
+
 public:
 	explicit PlayerInfo();
 	virtual ~PlayerInfo();
 
-private:
-	///플레이어 고유 번호
-	unsigned int m_Index;	
-	///플레이어 고유 이름
-	char m_name[MAX_NAME];
+	///Get
+	const char* GetName();
+
+	///Set
+	void SetName(const char* name);
+
+
 };
 
 #endif // !PLAYERINFO_H

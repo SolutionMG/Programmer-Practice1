@@ -18,5 +18,25 @@
 #include<unordered_map>
 #include<vector>
 #include<queue>
+#include<mutex>
+
+///USER
+#include "Define.h"
+
+///OPERATION TYPE
+enum class EOperationType : char
+{
+	RECV, SEND, ACCEPT, END
+};
+
+///EXTEND OVERLAPPED
+struct WSAOVERLAPPED_EXTEND
+{
+	WSAOVERLAPPED	m_over;
+	WSABUF			m_wsaBuffer;
+	unsigned char	m_networkBuffer[MAX_BUFFERSIZE];
+	EOperationType	m_opType;
+	SOCKET			m_socket;
+};
 
 #endif //PCH_H

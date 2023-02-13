@@ -11,9 +11,15 @@ int main()
 		return -1;
 	}
 
-	if (baseServer.RunServer() == false)
+	if (baseServer.Listen() == false)
 	{
-		std::cout << "baseServer.RunServer() 실패" << std::endl;
+		std::cout << "baseServer.Listen() 실패" << std::endl;
+		return -1;
+	}
+
+	if (baseServer.OpenServer() == false)
+	{
+		std::cout << "baseServer.OpenServer() 실패" << std::endl;
 		return -1;
 	}
 
