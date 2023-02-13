@@ -7,6 +7,16 @@
 #ifndef PCH_H
 #define PCH_H
 
-// 여기에 미리 컴파일하려는 헤더 추가
+///network
+#include<WS2tcpip.h>
+#include<MSWSock.h>
+#pragma comment(lib,"WS2_32.lib")
+#pragma comment(lib, "mswsock.lib")
+
+///C++
+#include<iostream>
+#include<unordered_map>
+#include<vector>
+#include<queue>
 
 #endif //PCH_H
