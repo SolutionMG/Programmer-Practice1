@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "PlayerInfo.h"
 
-PlayerInfo::PlayerInfo() : m_name{"Default"}
+PlayerInfo::PlayerInfo() : m_name{" "}
 {
 	m_chattingBuffer.reserve(InitailizeServer::MAX_BUFFERSIZE);
 }
@@ -15,7 +15,6 @@ const char* PlayerInfo::GetName()
 
 void PlayerInfo::SetName(const char* name)
 {
-	name;
 	strcpy_s(m_name, name);
 }
 
@@ -29,9 +28,8 @@ void PlayerInfo::ClearChattingBuffer()
 	m_chattingBuffer.clear();
 }
 
-const std::string PlayerInfo::GetChattingLog()
+const std::string_view PlayerInfo::GetChattingLog()
 {
-	std::string str = {m_chattingBuffer.begin(), m_chattingBuffer.begin() + m_chattingBuffer.size()};
-	std::cout << str << std::endl;
+	std::string_view str {m_chattingBuffer.begin(), m_chattingBuffer.begin() + m_chattingBuffer.size()};
 	return str;
 }

@@ -24,7 +24,7 @@ public:
 
 	///Get
 	const char* GetName();
-	const std::string GetChattingLog();
+	const std::string_view GetChattingLog();
 
 
 	void PushChattingBuffer(char word);
