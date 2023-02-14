@@ -19,7 +19,7 @@ void ClientInfo::ReceivePacket()
 	WSARecv(m_socket, &m_over.wsaBuffer, 1, NULL, &flag, &m_over.over, NULL);
 }
 
-void ClientInfo::SendPacket(char* data, unsigned short packetSize)
+void ClientInfo::SendPacket(const char* data, unsigned short packetSize)
 {
 	/// Overlapped Send ฟไรป
 	WSAOVERLAPPED_EXTEND* over = new WSAOVERLAPPED_EXTEND;

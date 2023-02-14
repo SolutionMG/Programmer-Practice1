@@ -14,7 +14,7 @@ public:
 	explicit ClientInfo();
 
 	void ReceivePacket();
-	void SendPacket(char* data, unsigned short packetSize);
+	void SendPacket(const char* data, unsigned short packetSize);
 
 	void StartLock();
 	void EndLock();

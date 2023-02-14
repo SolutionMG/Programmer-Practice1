@@ -56,7 +56,7 @@ bool BaseServer::Initialize()
         return false;
     }
 
-    std::cout << "서버 초기화 완료" << std::endl;
+    std::cout << "Server Initialize Sueccess..." << std::endl;
     return true;
 }
 
@@ -127,12 +127,9 @@ bool BaseServer::WorkProcess()
         {
 
             userKey = overExtend->socket;
-            std::cout << "ACCEPT Player " << userKey << std::endl;
+            std::cout << "ACCEPT Player [" << userKey << "]" << std::endl;
             AddNewClient(userKey);
-
-            char test[24] = "Welcome!\r\n>\0";
-            m_players[userKey]->SendPacket(test, sizeof(test));
-
+            m_players[userKey]->SendPacket(RenderMessageMacro::AccessMessage, sizeof(RenderMessageMacro::AccessMessage));
             m_players[userKey]->ReceivePacket();
             Accept(overExtend);
         }
@@ -166,7 +163,7 @@ bool BaseServer::Listen()
         return false;
     }
 
-    std::cout << "접속할 플레이어를 기다리고 있습니다." << std::endl;
+    std::cout << "Waiting For Player..." << std::endl;
     return true;
 }
 
