@@ -8,3 +8,4 @@ constexpr int TOTALCORE = 8;
 constexpr int MAX_NAME = 16;
 
 #endif // !DEFINE_H
+ 

@@ -32,11 +32,11 @@ enum class EOperationType : char
 ///EXTEND OVERLAPPED
 struct WSAOVERLAPPED_EXTEND
 {
-	WSAOVERLAPPED	m_over;
-	WSABUF			m_wsaBuffer;
-	unsigned char	m_networkBuffer[MAX_BUFFERSIZE];
-	EOperationType	m_opType;
-	SOCKET			m_socket;
+	WSAOVERLAPPED	over;
+	WSABUF			wsaBuffer;
+	unsigned char	networkBuffer[MAX_BUFFERSIZE];
+	EOperationType	opType;
+	SOCKET			socket;
 };
 
 #endif //PCH_H

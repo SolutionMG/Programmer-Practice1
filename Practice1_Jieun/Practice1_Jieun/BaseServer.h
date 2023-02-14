@@ -6,11 +6,11 @@ class PlayerInfo;
 class BaseServer final
 {
 private:
-	static SOCKET m_listenSocket;
-	static HANDLE ms_iocpHandle;
+	SOCKET m_listenSocket;
+	HANDLE m_iocpHandle;
 
 	/// 플레이어 관리용 변수
-	static std::unordered_map<SOCKET, PlayerInfo*> m_players;
+	std::unordered_map<SOCKET, PlayerInfo*> m_players;
 
 public:
 	explicit BaseServer();
@@ -22,20 +22,16 @@ public:
 	bool OpenServer();
 
 private:
+	bool WorkProcess();
+
+	bool Accept(WSAOVERLAPPED_EXTEND* over);
+	bool AddNewClient(const SOCKET& socket);
+
+	bool ReassemblePacket(unsigned char* packet,const DWORD& bytes, const SOCKET& socket);
 	bool Disconnect(SOCKET socket);
 
-	static bool WorkProcess();
-	static bool PacketReassembly(unsigned char* packet, DWORD bytes, SOCKET socket);
-
-	static bool Accept(WSAOVERLAPPED_EXTEND* over);
-	static bool ReceivePacket(SOCKET socket);
-	static bool SendPacket(SOCKET socket, void* data, unsigned short packetSize);
-
-	static bool AddNewClient(SOCKET socket);
-
-
 public:
-	static void DisplayError(const char* msg);
+	void DisplayError(const char* msg);
 };
 
 

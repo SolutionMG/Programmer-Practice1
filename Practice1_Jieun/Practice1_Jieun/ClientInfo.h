@@ -4,26 +4,31 @@
 class ClientInfo
 {
 private:
+	
 	SOCKET m_socket;
 	WSAOVERLAPPED_EXTEND m_over;
-	std::mutex m_clientLock;
 	
+	///Lock
+	std::mutex m_clientLock;
+
 public:
 	explicit ClientInfo();
 	virtual ~ClientInfo();
 
+	void ReceivePacket();
+	void SendPacket(unsigned char* data, unsigned short packetSize);
+
 	void StartLock();
 	void EndLock();
-
-	///Get
-	const SOCKET GetSocket();
-	WSAOVERLAPPED_EXTEND& GetOverlappedExtend();
 
 	///Set
 	void SetSocket(const SOCKET& s);
 	void SetOverlappedExtend(const WSAOVERLAPPED_EXTEND& over);
+	void SetOverlappedOperation(const EOperationType& operation);
 
-
+	///Get 
+	const SOCKET GetSocket();
+	const WSAOVERLAPPED_EXTEND& GetOverlappedExtend();
 };
 
 #endif // !CLIENT_H
