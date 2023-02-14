@@ -5,11 +5,8 @@
 #include <thread>
 
 /// Static 변수
-BaseServer::BaseServer()
+BaseServer::BaseServer() : m_iocpHandle(NULL), m_listenSocket(INVALID_SOCKET)
 {
-    m_iocpHandle = NULL;
-    m_listenSocket = INVALID_SOCKET;
-    m_players.reserve(100);
 }
 
 BaseServer::~BaseServer()
@@ -28,6 +25,9 @@ BaseServer::~BaseServer()
 
 bool BaseServer::Initialize()
 {
+    ///Initialize
+    m_players.reserve(100);
+    
     ///한국어 출력
     std::wcout.imbue(std::locale("korean"));
 
@@ -71,7 +71,7 @@ bool BaseServer::OpenServer()
 
     std::vector<std::thread> workerThreads;
 
-    for (int i = 0; i < (TOTALCORE / 2); ++i)
+    for (int i = 0; i < (InitailizeServer::TOTALCORE / 2); ++i)
     {
         workerThreads.emplace_back([&]() {WorkProcess(); });
     }
@@ -147,7 +147,7 @@ bool BaseServer::Listen()
     SOCKADDR_IN serverAddr;
     ZeroMemory(&serverAddr, sizeof(serverAddr));
     serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(SERVERPORT);
+    serverAddr.sin_port = htons(InitailizeServer::SERVERPORT);
     serverAddr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
 
     int returnValue = -1;

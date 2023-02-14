@@ -34,7 +34,7 @@ struct WSAOVERLAPPED_EXTEND
 {
 	WSAOVERLAPPED	over;
 	WSABUF			wsaBuffer;
-	char	networkBuffer[MAX_BUFFERSIZE];
+	char	networkBuffer[InitailizeServer::MAX_BUFFERSIZE];
 	EOperationType	opType;
 	SOCKET			socket;
 };

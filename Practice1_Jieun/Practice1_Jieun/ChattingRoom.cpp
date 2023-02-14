@@ -1,12 +1,7 @@
 #include "pch.h"
 #include "ChattingRoom.h"
 
-ChattingRoom::ChattingRoom()
+ChattingRoom::ChattingRoom() : totalPlayers(0)
 {
-	totalPlayers = 0;
 	accessorIndex.reserve(10);
-}
-
-ChattingRoom::~ChattingRoom()
-{
 }

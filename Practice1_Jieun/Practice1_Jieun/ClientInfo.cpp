@@ -1,17 +1,11 @@
 #include "pch.h"
 #include "ClientInfo.h"
 
-ClientInfo::ClientInfo()
+ClientInfo::ClientInfo() : m_socket{INVALID_SOCKET}, m_over{ WSAOVERLAPPED_EXTEND() }
 {
-	m_socket = INVALID_SOCKET;
-	m_over = WSAOVERLAPPED_EXTEND();
 	ZeroMemory(&m_over, sizeof(m_over));
 	m_over.wsaBuffer.buf = m_over.networkBuffer;
-	m_over.wsaBuffer.len = MAX_BUFFERSIZE;
-}
-
-ClientInfo::~ClientInfo()
-{
+	m_over.wsaBuffer.len = InitailizeServer::MAX_BUFFERSIZE ;
 }
 
 void ClientInfo::ReceivePacket()
@@ -19,7 +13,7 @@ void ClientInfo::ReceivePacket()
 	/// Overlapped Receive ø‰√ª
 	ZeroMemory(&m_over, sizeof(m_over));
 	m_over.wsaBuffer.buf = m_over.networkBuffer;
-	m_over.wsaBuffer.len = MAX_BUFFERSIZE;
+	m_over.wsaBuffer.len = InitailizeServer::MAX_BUFFERSIZE;
 	m_over.opType = EOperationType::RECV;
 	DWORD flag = 0;
 	WSARecv(m_socket, &m_over.wsaBuffer, 1, NULL, &flag, &m_over.over, NULL);

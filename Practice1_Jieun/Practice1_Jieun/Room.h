@@ -9,7 +9,6 @@ private:
 
 public:
 	explicit Room();
-	virtual ~Room();
 
 };
 

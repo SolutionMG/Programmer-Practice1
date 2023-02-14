@@ -1,7 +1,8 @@
 #ifndef CHATTINGROOM_H
 #define CHATTINGROOM_H
+#include "Room.h"
 
-class ChattingRoom
+class ChattingRoom: public Room
 {
 private:
 	/// 채팅방 총인원 수 
@@ -11,7 +12,6 @@ private:
 
 public:
 	explicit ChattingRoom();
-	virtual ~ChattingRoom();
 };
 
 #endif // !CHATTINGROOM_H
