@@ -4,7 +4,6 @@
 class ClientInfo
 {
 private:
-	
 	SOCKET m_socket;
 	WSAOVERLAPPED_EXTEND m_over;
 	
@@ -16,7 +15,7 @@ public:
 	virtual ~ClientInfo();
 
 	void ReceivePacket();
-	void SendPacket(unsigned char* data, unsigned short packetSize);
+	void SendPacket(char* data, unsigned short packetSize);
 
 	void StartLock();
 	void EndLock();

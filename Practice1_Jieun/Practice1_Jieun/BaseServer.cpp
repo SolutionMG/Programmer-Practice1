@@ -109,7 +109,6 @@ bool BaseServer::WorkProcess()
                 Disconnect(userKey);
                 break;
             }
-            std::cout << "RECV Player " << m_players[userKey]->GetName() << userKey << std::endl;
             ReassemblePacket(overExtend->networkBuffer, bytes, userKey);
             m_players[userKey]->ReceivePacket();
         }
@@ -131,7 +130,7 @@ bool BaseServer::WorkProcess()
             std::cout << "ACCEPT Player " << userKey << std::endl;
             AddNewClient(userKey);
 
-            unsigned char test[24] = "Welcome!\r\n>\0";
+            char test[24] = "Welcome!\r\n>\0";
             m_players[userKey]->SendPacket(test, sizeof(test));
 
             m_players[userKey]->ReceivePacket();
@@ -140,31 +139,6 @@ bool BaseServer::WorkProcess()
         break;
         }
     }
-    return false;
-}
-
-bool BaseServer::ReassemblePacket(unsigned char* packet, const DWORD& bytes, const SOCKET& socket)
-{
-    DWORD remainData = bytes;
-    
-    while (remainData > 0)
-    {
-        if (remainData == 1)
-        {
-            if (packet[0] == '\n')
-            {
-                std::cout << m_players[socket]->GetChattingLog() << std::endl;
-                break;
-            }
-
-            m_players[socket]->PushChattingBuffer(packet);
-            packet += bytes;
-            remainData -= bytes;
-        }
-    }
-    
-    //m_players[userKey]->SendPacket(static_cast<unsigned char*>(overExtend->networkBuffer), static_cast<unsigned short>(bytes));
-
     return false;
 }
 
@@ -250,6 +224,36 @@ bool BaseServer::AddNewClient(const SOCKET& socket)
         return false;
     }
     return true;
+}
+
+bool BaseServer::ReassemblePacket(char* packet, const DWORD& bytes, const SOCKET& socket)
+{
+    if (packet == nullptr || bytes == 0 )
+        return false;
+
+    for (DWORD i = 0; i < bytes; ++i) {
+        if (packet[i] == '\r\n' || packet[i] == '\n')
+        {
+            m_players[socket]->GetChattingLog();
+            m_players[socket]->ClearChattingBuffer();
+
+            char nextLine = '\n';
+            m_players[socket]->SendPacket(&nextLine, sizeof(char));
+            break;
+        }
+        std::cout << packet[i] << std::endl;
+        m_players[socket]->PushChattingBuffer(packet[i]);
+    }
+    return true;
+}
+
+bool BaseServer::ProcessPacket(const SOCKET& socket, char* word)
+{
+    word;
+    m_players[socket]->GetChattingLog();
+    m_players[socket]->ClearChattingBuffer();
+    m_players[socket]->PushChattingBuffer(word[0]);
+    return false;
 }
 
 bool BaseServer::Disconnect(SOCKET socket)

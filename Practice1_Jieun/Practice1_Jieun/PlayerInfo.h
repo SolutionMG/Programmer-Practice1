@@ -9,7 +9,7 @@ private:
 	char m_name[MAX_NAME];
 
 	///플레이어가 송신 전 입력중인 문자열
-	std::vector<unsigned char*> m_chattingBuffer;
+	std::vector<char> m_chattingBuffer;
 
 public:
 	explicit PlayerInfo();
@@ -21,9 +21,8 @@ public:
 	///Get
 	const char* GetName();
 
-	void PushChattingBuffer(unsigned char word[]);
+	void PushChattingBuffer(char word);
 	void ClearChattingBuffer();
-	bool CheckChattingEnd();
 
 	const std::string GetChattingLog();
 
