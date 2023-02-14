@@ -6,6 +6,8 @@ PlayerInfo::PlayerInfo() : m_name{"Default"}
 	m_chattingBuffer.reserve(InitailizeServer::MAX_BUFFERSIZE);
 }
 
+PlayerInfo::~PlayerInfo() noexcept = default;
+
 const char* PlayerInfo::GetName()
 {
 	return m_name;
@@ -29,7 +31,7 @@ void PlayerInfo::ClearChattingBuffer()
 
 const std::string PlayerInfo::GetChattingLog()
 {
-	std::string str = {m_chattingBuffer.begin(), m_chattingBuffer.end()};
-	std::cout << str;
+	std::string str = {m_chattingBuffer.begin(), m_chattingBuffer.begin() + m_chattingBuffer.size()};
+	std::cout << str << std::endl;
 	return str;
 }

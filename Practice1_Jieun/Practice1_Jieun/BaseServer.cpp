@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <thread>
 
+
 /// Static º¯¼ö
 BaseServer::BaseServer() : m_iocpHandle(NULL), m_listenSocket(INVALID_SOCKET)
 {
@@ -105,7 +106,8 @@ bool BaseServer::WorkProcess()
         {
         case EOperationType::RECV:
         {
-            if (bytes == 0) {
+            if ( bytes == 0 ) 
+            {
                 Disconnect(userKey);
                 break;
             }
@@ -228,7 +230,8 @@ bool BaseServer::ReassemblePacket(char* packet, const DWORD& bytes, const SOCKET
     if (packet == nullptr || bytes == 0 )
         return false;
 
-    for (DWORD i = 0; i < bytes; ++i) {
+    for (DWORD i = 0; i < bytes; ++i)
+    {
         if (packet[i] == '\r\n' || packet[i] == '\n')
         {
             m_players[socket]->GetChattingLog();
@@ -238,8 +241,10 @@ bool BaseServer::ReassemblePacket(char* packet, const DWORD& bytes, const SOCKET
             m_players[socket]->SendPacket(&nextLine, sizeof(char));
             break;
         }
-        std::cout << packet[i] << std::endl;
-        m_players[socket]->PushChattingBuffer(packet[i]);
+        else// if(packet[i] == \)
+        {
+            m_players[socket]->PushChattingBuffer(packet[i]);
+        }
     }
     return true;
 }

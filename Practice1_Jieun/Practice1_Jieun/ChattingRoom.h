@@ -1,6 +1,9 @@
+
+
 #ifndef CHATTINGROOM_H
 #define CHATTINGROOM_H
 #include "Room.h"
+
 
 class ChattingRoom: public Room
 {
