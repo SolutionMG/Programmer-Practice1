@@ -15,6 +15,7 @@ private:
 
 public:
 	explicit ChattingRoom();
+	virtual ~ChattingRoom() noexcept;
 };
 
 #endif // !CHATTINGROOM_H

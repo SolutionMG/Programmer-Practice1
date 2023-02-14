@@ -5,3 +5,4 @@ ChattingRoom::ChattingRoom() : totalPlayers(0)
 {
 	accessorIndex.reserve(10);
 }
+ChattingRoom::~ChattingRoom() noexcept = default;

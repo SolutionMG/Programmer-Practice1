@@ -14,6 +14,7 @@ private:
 
 public:
 	explicit ClientInfo();
+	virtual ~ClientInfo() noexcept;
 
 	void ReceivePacket();
 	void SendPacket(const char* data, unsigned short packetSize);

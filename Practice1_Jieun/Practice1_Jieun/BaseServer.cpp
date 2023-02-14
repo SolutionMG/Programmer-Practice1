@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <thread>
 
-
 /// Static 변수
 BaseServer::BaseServer() : m_iocpHandle(NULL), m_listenSocket(INVALID_SOCKET)
 {
@@ -206,7 +205,6 @@ bool BaseServer::Accept(WSAOVERLAPPED_EXTEND* over)
 
     return true;
 }
-//ReceivePacket 삭제
 
 bool BaseServer::AddNewClient(const SOCKET& socket)
 {
@@ -241,7 +239,7 @@ bool BaseServer::ReassemblePacket(char* packet, const DWORD& bytes, const SOCKET
             m_players[socket]->SendPacket(&nextLine, sizeof(char));
             break;
         }
-        else// if(packet[i] == \)
+        else
         {
             m_players[socket]->PushChattingBuffer(packet[i]);
         }
@@ -261,6 +259,9 @@ bool BaseServer::ProcessPacket(const SOCKET& socket, char* word)
 bool BaseServer::Disconnect(SOCKET socket)
 {
     socket;
+    ///m_players[socket]->StartLock();
+
+    ///m_players[socket]->EndLock();
     return true;
 }
 

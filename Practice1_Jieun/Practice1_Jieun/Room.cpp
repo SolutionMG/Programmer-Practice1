@@ -5,3 +5,4 @@ Room::Room() : m_index(-1)
 {
 }
 
+Room::~Room() noexcept = default;

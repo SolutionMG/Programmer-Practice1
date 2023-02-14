@@ -8,6 +8,8 @@ ClientInfo::ClientInfo() : m_socket{INVALID_SOCKET}, m_over{ WSAOVERLAPPED_EXTEN
 	m_over.wsaBuffer.len = InitailizeServer::MAX_BUFFERSIZE ;
 }
 
+ClientInfo::~ClientInfo() noexcept = default;
+
 void ClientInfo::ReceivePacket()
 {
 	/// Overlapped Receive ฟไรป

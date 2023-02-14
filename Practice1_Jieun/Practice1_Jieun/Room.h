@@ -12,7 +12,7 @@ private:
 
 public:
 	explicit Room();
-
+	virtual ~Room() noexcept;
 };
 
 #endif // !ROOM_H
