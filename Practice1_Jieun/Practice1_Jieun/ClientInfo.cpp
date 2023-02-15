@@ -24,15 +24,15 @@ void ClientInfo::ReceivePacket()
 	m_receiveLock.unlock();
 }
 
-void ClientInfo::SendPacket(const char* data, unsigned short packetSize)
+void ClientInfo::SendPacket( const std::string_view& data, unsigned short /* packetSize */ )
 {
 	/// Overlapped Send ¿äÃ»
 	WSAOVERLAPPED_EXTEND* over = new WSAOVERLAPPED_EXTEND;
 	over->opType = EOperationType::SEND;
 	ZeroMemory(&over->over, sizeof(over->over));
-	memcpy_s(over->networkBuffer, sizeof(over->networkBuffer), data, packetSize);
+	memcpy_s(over->networkBuffer, sizeof(over->networkBuffer), data.data(), data.size() );
 	over->wsaBuffer.buf = over->networkBuffer;
-	over->wsaBuffer.len = packetSize;
+	over->wsaBuffer.len = static_cast< decltype( over->wsaBuffer.len ) >( data.size() );
 	WSASend(m_socket, &over->wsaBuffer, 1, 0, 0, &over->over, 0);
 }
 

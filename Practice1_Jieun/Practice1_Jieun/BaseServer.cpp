@@ -100,7 +100,10 @@ bool BaseServer::InitializeCommandFunction()
     m_commandFunctions.insert({ CommandMessage::ROOMENTER, [&](const SOCKET& socket) { RequestRoomEnter(socket); } });
     m_commandFunctions.insert({ CommandMessage::PLAYERINFO, [&](const SOCKET& socket) { RequestUserInfo(socket); } });
     m_commandFunctions.insert({ CommandMessage::ROOMINFO, [&](const SOCKET& socket) { RequestRoomInfo(socket); } });
+    m_commandFunctions.insert({ CommandMessage::SECRETMESSAGE, [&](const SOCKET& socket) { RequestNote(socket); } });
+
     
+
     return true;
 }
 
@@ -651,22 +654,102 @@ bool BaseServer::RequestRoomInfo(const SOCKET& socket)
     return true;
 }
 
+bool BaseServer::RequestNote(const SOCKET& socket)
+{
+    m_playersLock.lock();
+    auto& player = m_players[socket];
+    m_playersLock.unlock();
+
+    std::string_view message = { player.GetChattingLog().cbegin(), player.GetChattingLog().cend() };
+
+    if (message.length() <= 2)
+    {
+        player.SendPacket(RenderMessageMacro::FAILEDCOMMANDMESSAGE, sizeof(RenderMessageMacro::FAILEDCOMMANDMESSAGE));
+        player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+        player.ReceivePacket();
+        return false;
+    }
+
+    std::string name;
+    std::string note;
+    bool flag = true;
+    for (int i = 3; i < message.length(); ++i)
+    {
+        if (message[i] == ' ')
+        {
+            flag = false;
+        }
+
+        if (flag == true)
+        {
+            name += message[i];
+
+        }
+        else
+        {
+            note += message[i];
+        }
+    }
+
+    bool isExistPlayer = false;
+    PlayerInfo* targetPlayerInfo = nullptr;
+
+    {
+        m_playersLock.lock();
+        
+        for ( auto& p : m_players)
+        {
+            if (name == p.second.GetName())
+            {
+                targetPlayerInfo = &( p.second );
+                isExistPlayer = true;
+            }
+        }
+
+        m_playersLock.unlock();
+    }
+    
+    if (isExistPlayer == false)
+    {
+        player.SendPacket("존재하지 않는 유저입니다.\n\r");
+        player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+    }
+    else
+    {
+        if (name == player.GetName())
+        {
+            player.SendPacket("본인에게는 귓속말을 할 수 없습니다.\n\r");
+            player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+        }
+        else
+        {
+            name += "==>";
+            name += note;
+            name += "\n\r";
+            targetPlayerInfo->SendPacket(name.c_str());
+            player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+        }
+
+    }
+
+    player.ReceivePacket();
+
+    return false;
+}
+
 bool BaseServer::RequestRoomCreate(const SOCKET& socket)
 {
     ///o 최대인원 방이름
     m_playersLock.lock();
-    m_players[socket].StartLock();
-    std::string_view message = { m_players[socket].GetChattingLog().cbegin(), m_players[socket].GetChattingLog().cend() };
-    m_players[socket].EndLock();
+    auto& player = m_players[socket];
     m_playersLock.unlock();
+    std::string_view message = { player.GetChattingLog().cbegin(), player.GetChattingLog().cend() };
 
     if (message.length() <= 3)
     {
-        m_playersLock.lock();
-        m_players[socket].SendPacket(RenderMessageMacro::FAILEDCOMMANDMESSAGE, sizeof(RenderMessageMacro::FAILEDCOMMANDMESSAGE));
-        m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
-        m_players[socket].ReceivePacket();
-        m_playersLock.unlock();
+        player.SendPacket(RenderMessageMacro::FAILEDCOMMANDMESSAGE, sizeof(RenderMessageMacro::FAILEDCOMMANDMESSAGE));
+        player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+        player.ReceivePacket();
         return false;
     }
 
@@ -674,14 +757,21 @@ bool BaseServer::RequestRoomCreate(const SOCKET& socket)
     /// 인원 초과
     if (maxUser < 2 || maxUser > 20)
     {
-        m_playersLock.lock();
-        m_players[socket].SendPacket(RenderMessageMacro::CREATEROOMFAILEDOVERUSERS, sizeof(RenderMessageMacro::CREATEROOMFAILEDOVERUSERS));
-        m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
-        m_players[socket].ReceivePacket();
-        m_playersLock.unlock();
+        player.SendPacket(RenderMessageMacro::CREATEROOMFAILEDOVERUSERS, sizeof(RenderMessageMacro::CREATEROOMFAILEDOVERUSERS));
+        player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+        player.ReceivePacket();
         return false;
     }
     
+    if (message[3] != '0')
+    {
+        //예외처리
+        player.SendPacket(RenderMessageMacro::CREATEROOMFAILEDOVERUSERS, sizeof(RenderMessageMacro::CREATEROOMFAILEDOVERUSERS));
+        player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+        player.ReceivePacket();
+        return false;
+    }
+
     /// 방이름 여부 
     std::string roomName = { message.cbegin() + 4, message.cend() };
     

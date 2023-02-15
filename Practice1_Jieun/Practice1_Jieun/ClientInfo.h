@@ -23,7 +23,7 @@ public:
 	virtual ~ClientInfo() noexcept;
 
 	void ReceivePacket();
-	void SendPacket(const char* data, unsigned short packetSize);
+	void SendPacket( const std::string_view& data, unsigned short packetSize = 0 );
 
 	void StartLock();
 	void EndLock();
