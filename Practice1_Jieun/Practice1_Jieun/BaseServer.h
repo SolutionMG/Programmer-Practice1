@@ -6,7 +6,7 @@
 #include <functional>
 
 class PlayerInfo;
-
+class ChattingRoom;
 
 class BaseServer final
 {
@@ -20,6 +20,11 @@ private:
 
 	///커맨드 별 함수 관리용 변수
 	std::unordered_map<std::string_view, std::function<void(const SOCKET& socket)>> m_commandFunctions;
+
+	///채팅방 관리용 변수
+	std::mutex m_chattRoomLock;
+	std::unordered_map<int, ChattingRoom> m_chattingRooms;
+	int m_chatRoomindex;
 
 	///로그온 프로세스
 	std::mutex m_logOnLock;

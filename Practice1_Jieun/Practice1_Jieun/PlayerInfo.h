@@ -12,6 +12,7 @@ private:
 	char m_name[InitailizePlayer::MAX_NAME];
 	///플레이어가 송신 전 입력중인 문자열
 	std::vector<char> m_chattingBuffer;
+	int m_roomNumber;
 
 public:
 	explicit PlayerInfo();
@@ -19,10 +20,12 @@ public:
 
 	///Set
 	void SetName(const char* name);
+	void SetPlayerRoomNumber(const int& num);
 
 	///Get
 	const char* GetName() const;
 	const std::string_view GetChattingLog();
+	const int& GetPlayerRoomNumber();
 
 
 	void PushChattingBuffer(char word);

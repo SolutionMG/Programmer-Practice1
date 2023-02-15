@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "PlayerInfo.h"
 
-PlayerInfo::PlayerInfo() : m_name{ " " }
+PlayerInfo::PlayerInfo() : m_name{ " " }, m_roomNumber{ -1 }
 {
 	m_chattingBuffer.reserve(InitailizeServer::MAX_BUFFERSIZE);
 }
@@ -18,6 +18,11 @@ void PlayerInfo::SetName(const char* name)
 	strcpy_s(m_name, name);
 }
 
+void PlayerInfo::SetPlayerRoomNumber(const int& num)
+{
+	m_roomNumber = num;
+}
+
 void PlayerInfo::PushChattingBuffer(char word)
 {
 	m_chattingBuffer.emplace_back(word);
@@ -32,4 +37,9 @@ const std::string_view PlayerInfo::GetChattingLog()
 {
 	std::string_view str{ m_chattingBuffer.begin(), m_chattingBuffer.begin() + m_chattingBuffer.size() };
 	return str;
+}
+
+const int& PlayerInfo::GetPlayerRoomNumber()
+{
+	return m_roomNumber;
 }
