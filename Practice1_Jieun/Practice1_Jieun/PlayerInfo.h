@@ -17,13 +17,11 @@ public:
 	explicit PlayerInfo();
 	virtual ~PlayerInfo() noexcept;
 
-
 	///Set
 	void SetName(const char* name);
 
-
 	///Get
-	const char* GetName();
+	const char* GetName() const;
 	const std::string_view GetChattingLog();
 
 

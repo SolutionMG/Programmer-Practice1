@@ -1,11 +1,11 @@
 #include "pch.h"
 #include "ClientInfo.h"
 
-ClientInfo::ClientInfo() : m_socket{INVALID_SOCKET}, m_over{ WSAOVERLAPPED_EXTEND() }, m_state { ClientState::END }
+ClientInfo::ClientInfo() : m_socket{ INVALID_SOCKET }, m_over{ WSAOVERLAPPED_EXTEND() }, m_state{ ClientState::END }
 {
 	ZeroMemory(&m_over, sizeof(m_over));
 	m_over.wsaBuffer.buf = m_over.networkBuffer;
-	m_over.wsaBuffer.len = InitailizeServer::MAX_BUFFERSIZE ;
+	m_over.wsaBuffer.len = InitailizeServer::MAX_BUFFERSIZE;
 }
 
 ClientInfo::~ClientInfo() noexcept = default;
@@ -19,8 +19,8 @@ void ClientInfo::ReceivePacket()
 	m_over.wsaBuffer.len = InitailizeServer::MAX_BUFFERSIZE;
 	m_over.opType = EOperationType::RECV;
 	DWORD flag = 0;
-	m_receiveLock.unlock();
 	WSARecv(m_socket, &m_over.wsaBuffer, 1, NULL, &flag, &m_over.over, NULL);
+	m_receiveLock.unlock();
 }
 
 void ClientInfo::SendPacket(const char* data, unsigned short packetSize)
@@ -32,10 +32,7 @@ void ClientInfo::SendPacket(const char* data, unsigned short packetSize)
 	memcpy_s(over->networkBuffer, sizeof(over->networkBuffer), data, packetSize);
 	over->wsaBuffer.buf = over->networkBuffer;
 	over->wsaBuffer.len = packetSize;
-	m_sendLock.lock();
 	WSASend(m_socket, &over->wsaBuffer, 1, 0, 0, &over->over, 0);
-	m_sendLock.unlock();
-
 }
 
 void ClientInfo::StartLock()

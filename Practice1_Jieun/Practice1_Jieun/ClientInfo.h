@@ -5,7 +5,7 @@
 
 enum class ClientState : char
 {
-	ACCESS, LOGON, ROOM, EXIT, END 
+	ACCESS, LOGON, ROOM, EXIT, END
 };
 
 class ClientInfo
@@ -17,7 +17,6 @@ private:
 
 	///Lock
 	std::mutex m_clientLock;
-	std::mutex m_sendLock;
 	std::mutex m_receiveLock;
 
 public:

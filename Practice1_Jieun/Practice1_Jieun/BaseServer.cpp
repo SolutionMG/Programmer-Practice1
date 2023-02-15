@@ -10,24 +10,13 @@ BaseServer::BaseServer() : m_iocpHandle(NULL), m_listenSocket(INVALID_SOCKET)
 {
 }
 
-BaseServer::~BaseServer()
-{
-    for_each(m_players.begin(), m_players.end(),
-        [](std::pair<SOCKET, PlayerInfo*> player)
-        {
-            if (player.second != nullptr)
-            {
-                delete player.second;
-                player.second = nullptr;
-            }
-        }
-    );
-}
+BaseServer::~BaseServer() noexcept = default;
 
 bool BaseServer::Initialize()
 {
     ///Initialize
     m_players.reserve(100);
+    InitializeCommandFunction();
 
     ///한국어 출력
     std::wcout.imbue(std::locale("korean"));
@@ -94,6 +83,17 @@ bool BaseServer::OpenServer()
     return false;
 }
 
+bool BaseServer::InitializeCommandFunction()
+{
+    m_commandFunctions.reserve(10);
+    m_commandFunctions.insert({ CommandMessage::COMMANDLIST, [&](const SOCKET& socket) { ReqeustCommandList(socket);} });
+    m_commandFunctions.insert({ CommandMessage::USERLIST, [&](const SOCKET& socket) { RequestUserList(socket); } });
+    m_commandFunctions.insert({ CommandMessage::EXIT, [&](const SOCKET& socket) { RequestExit(socket); } });
+
+
+    return true;
+}
+
 bool BaseServer::MainWorkProcess()
 {
     while (true)
@@ -110,13 +110,12 @@ bool BaseServer::MainWorkProcess()
         {
         case EOperationType::RECV:
         {
-            if ( bytes == 0 ) 
+            if (bytes == 0)
             {
                 Disconnect(userKey);
                 break;
             }
             ReassemblePacket(overExtend->networkBuffer, bytes, userKey);
-            m_players[userKey]->ReceivePacket();
         }
         break;
 
@@ -134,7 +133,7 @@ bool BaseServer::MainWorkProcess()
             userKey = overExtend->socket;
             std::cout << "ACCEPT Player [" << userKey << "]" << std::endl;
             AddNewClient(userKey);
-            m_players[userKey]->ReceivePacket();
+            m_players[userKey].ReceivePacket();
             Accept(overExtend);
         }
         break;
@@ -211,13 +210,11 @@ bool BaseServer::Accept(WSAOVERLAPPED_EXTEND* over)
 
 bool BaseServer::AddNewClient(const SOCKET& socket)
 {
-    m_players[socket] = new PlayerInfo;
-
-    m_players[socket]->StartLock();
-    m_players[socket]->SetSocket(socket);
-    m_players[socket]->SetOverlappedOperation(EOperationType::RECV);
-    m_players[socket]->SetState(ClientState::ACCESS);
-    m_players[socket]->EndLock();
+    m_players[socket].StartLock();
+    m_players[socket].SetSocket(socket);
+    m_players[socket].SetOverlappedOperation(EOperationType::RECV);
+    m_players[socket].SetState(ClientState::ACCESS);
+    m_players[socket].EndLock();
 
     HANDLE returnValue2 = CreateIoCompletionPort(reinterpret_cast<HANDLE>(socket), m_iocpHandle, socket, 0);
     if (returnValue2 == NULL) {
@@ -226,60 +223,73 @@ bool BaseServer::AddNewClient(const SOCKET& socket)
     }
 
     /// 로그인 요청 메시지 전송
-    m_players[socket]->SendPacket(RenderMessageMacro::ACCESSMESSAGE, sizeof(RenderMessageMacro::ACCESSMESSAGE));
-    m_players[socket]->SendPacket(RenderMessageMacro::LOGONREQUEST, sizeof(RenderMessageMacro::LOGONREQUEST));
+    m_players[socket].SendPacket(RenderMessageMacro::ACCESSMESSAGE, sizeof(RenderMessageMacro::ACCESSMESSAGE));
+    m_players[socket].SendPacket(RenderMessageMacro::LOGONREQUEST, sizeof(RenderMessageMacro::LOGONREQUEST));
+    m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
 
     return true;
 }
 
-bool BaseServer::CommandWorkBranch(const SOCKET& socket, const std::string_view& command)
+bool BaseServer::StateWorkBranch(const SOCKET& socket, const std::string_view& command)
 {
-    m_players[socket]->StartLock();
-    switch (m_players[socket]->GetState())
+    m_players[socket].StartLock();
+    switch (m_players[socket].GetState())
     {
     case ClientState::ACCESS:
     {
-        m_players[socket]->EndLock();
+        m_players[socket].EndLock();
 
-        if ( command.length() < sizeof("LOGIN") )
+        if (command.length() < sizeof(CommandMessage::LOGON))
         {
-            m_players[socket]->SendPacket(RenderMessageMacro::LOGONREQUEST, sizeof(RenderMessageMacro::LOGONREQUEST));
-            m_players[socket]->SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+            m_players[socket].ClearChattingBuffer();
+            m_players[socket].SendPacket(RenderMessageMacro::LOGONREQUEST, sizeof(RenderMessageMacro::LOGONREQUEST));
+            m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+            m_players[socket].ReceivePacket();
             break;
         }
-        std::string_view checkCommand = { command.cbegin(), command.cbegin() + sizeof("LOGIN") - 1 };
-        if ( checkCommand == "LOGIN" )
+
+        std::string_view checkCommand = { command.cbegin(), command.cbegin() + sizeof(CommandMessage::LOGON) - 1 };
+        if (checkCommand == CommandMessage::LOGON)
         {
             m_logOn.push(socket);
         }
         else
         {
-            m_players[socket]->StartLock();
-            m_players[socket]->ClearChattingBuffer();
-            m_players[socket]->EndLock();
-            m_players[socket]->SendPacket(RenderMessageMacro::LOGONREQUEST, sizeof(RenderMessageMacro::LOGONREQUEST));
-            m_players[socket]->SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
-
+            m_players[socket].StartLock();
+            m_players[socket].ClearChattingBuffer();
+            m_players[socket].EndLock();
+            m_players[socket].SendPacket(RenderMessageMacro::LOGONREQUEST, sizeof(RenderMessageMacro::LOGONREQUEST));
+            m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+            m_players[socket].ReceivePacket();
         }
-    }  
+    }
     break;
     case ClientState::LOGON:
     {
-        m_players[socket]->EndLock();
-        m_players[socket]->ClearChattingBuffer();
-        m_players[socket]->SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+        m_players[socket].EndLock();
+        CommandWorkBranch(socket, command);
     }
     break;
     case ClientState::ROOM:
     {
-        m_players[socket]->EndLock();
-        m_players[socket]->ClearChattingBuffer();
+        m_players[socket].EndLock();
+        m_players[socket].ClearChattingBuffer();
+        m_players[socket].ReceivePacket();
+        m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+
     }
     break;
     case ClientState::END:
     {
-        m_players[socket]->EndLock();
-        m_players[socket]->ClearChattingBuffer();
+        m_players[socket].EndLock();
+        m_players[socket].ReceivePacket();
+        m_players[socket].ClearChattingBuffer();
+    }
+    break;
+    default:
+    {
+        m_players[socket].ReceivePacket();
+        m_players[socket].EndLock();
     }
     break;
     }
@@ -287,7 +297,61 @@ bool BaseServer::CommandWorkBranch(const SOCKET& socket, const std::string_view&
     return true;
 }
 
-bool BaseServer::LogOnCommandProcess()
+bool BaseServer::CommandWorkBranch(const SOCKET& socket, const std::string_view& request)
+{
+    m_players[socket].ClearChattingBuffer();
+    auto iterator = m_commandFunctions.find(request);
+    if (iterator == m_commandFunctions.end())
+    {
+        m_players[socket].ReceivePacket();
+        return false;
+    }
+
+    m_commandFunctions[request](socket);
+    return true;
+}
+
+bool BaseServer::ReqeustCommandList(const SOCKET& socket)
+{
+    m_players[socket].SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE, sizeof(RenderMessageMacro::DIVIDELINEMESSAGE));
+    m_players[socket].SendPacket(RenderMessageMacro::GUIDEMESSAGE, sizeof(RenderMessageMacro::GUIDEMESSAGE));
+    m_players[socket].SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE, sizeof(RenderMessageMacro::DIVIDELINEMESSAGE));
+    m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+    m_players[socket].ReceivePacket();
+    return true;
+}
+
+bool BaseServer::RequestExit(const SOCKET& socket)
+{
+    return Disconnect(socket);
+}
+
+bool BaseServer::RequestUserList(const SOCKET& socket)
+{
+    m_players[socket].SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE, sizeof(RenderMessageMacro::DIVIDELINEMESSAGE));
+    std::string userNameList = "-- 유저 목록 --\n\r";
+
+    for (const auto& player : m_players)
+    {
+        userNameList += player.second.GetName();
+        userNameList += "\n\r";
+    }
+    m_players[socket].SendPacket(userNameList.c_str(), static_cast<short>(userNameList.size()));
+    m_players[socket].SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE, sizeof(RenderMessageMacro::DIVIDELINEMESSAGE));
+    m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+    m_players[socket].ReceivePacket();
+    return true;
+}
+
+bool BaseServer::RequestRoomCreate(const SOCKET& socket)
+{
+  
+    m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+    m_players[socket].ReceivePacket();
+    return false;
+}
+
+void BaseServer::LogOnCommandProcess()
 {
     using namespace std::chrono_literals;
 
@@ -306,63 +370,74 @@ bool BaseServer::LogOnCommandProcess()
             SOCKET socket = m_logOn.front();
             m_logOn.pop();
             m_logOnLock.unlock();
-            
-            m_players[socket]->StartLock();
+
+            m_players[socket].StartLock();
 
             /// 이름 추출
-            std::string name { m_players[socket]->GetChattingLog().cbegin() + sizeof("LOGIN"), m_players[socket]->GetChattingLog().cend()};
-
+            const std::string name{ m_players[socket].GetChattingLog().cbegin() + sizeof(CommandMessage::LOGON), m_players[socket].GetChattingLog().cend() };
+            bool check = false;
             /// 동일이름 유저 존재유무 확인
-            const auto success = m_players.cend();
-            const auto check = std::find_if(m_players.cbegin(), m_players.cend(),
-                [&](std::pair<SOCKET, PlayerInfo*> player)
-                {
-                    return name == player.second->GetName();
-                });
-
-            m_players[socket]->EndLock();
-            
-            if (check == success)
+            for (const auto& player : m_players)
             {
-                m_players[socket]->StartLock();
-                m_players[socket]->SetName(name.c_str());
-                m_players[socket]->SetState(ClientState::LOGON);
-                m_players[socket]->EndLock();
+                if (name == player.second.GetName())
+                {
+                    check = true;
+                    break;
+                }
+            }
 
-                std::cout << name.c_str() << "["<< socket << "] LogOn" << std::endl;
-                m_players[socket]->SendPacket(RenderMessageMacro::SUCCESSLOGONMESSAGE, sizeof(RenderMessageMacro::SUCCESSLOGONMESSAGE));
+            m_players[socket].EndLock();
+
+            if (check == false)
+            {
+                m_players[socket].StartLock();
+                m_players[socket].ClearChattingBuffer();
+                m_players[socket].SetName(name.c_str());
+                m_players[socket].SetState(ClientState::LOGON);
+                m_players[socket].EndLock();
+
+                std::cout << name.c_str() << "[" << socket << "] LogOn" << std::endl;
+
+                ///클라이언트에 로그인 성공 문구 출력
+                m_players[socket].SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE, sizeof(RenderMessageMacro::DIVIDELINEMESSAGE));
+                m_players[socket].SendPacket(RenderMessageMacro::SUCCESSLOGONMESSAGE, sizeof(RenderMessageMacro::SUCCESSLOGONMESSAGE));
+                m_players[socket].SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE, sizeof(RenderMessageMacro::DIVIDELINEMESSAGE));
+                m_players[socket].SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE, sizeof(RenderMessageMacro::SELECTCOMMANDMESSAGE));
+                m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+                m_players[socket].ReceivePacket();
             }
 
             else
             {
-                m_players[socket]->StartLock();
-                m_players[socket]->ClearChattingBuffer();
-                m_players[socket]->EndLock();
+                m_players[socket].StartLock();
+                m_players[socket].ClearChattingBuffer();
+                m_players[socket].EndLock();
 
-                m_players[socket]->SendPacket(RenderMessageMacro::LOGONFAILED, sizeof(RenderMessageMacro::LOGONFAILED));
+                ///클라이언트에 로그인 실패 문구 출력
+                m_players[socket].SendPacket(RenderMessageMacro::LOGONFAILED, sizeof(RenderMessageMacro::LOGONFAILED));
+                m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+                m_players[socket].ReceivePacket();
             }
         }
-
     }
-
-    return true;
 }
 
 bool BaseServer::ReassemblePacket(char* packet, const DWORD& bytes, const SOCKET& socket)
 {
-    if (packet == nullptr || bytes == 0 )
+    if (packet == nullptr || bytes == 0)
         return false;
 
     for (DWORD i = 0; i < bytes; ++i)
     {
         if (packet[i] == '\r\n' || packet[i] == '\n' || packet[i] == '\r')
         {
-            CommandWorkBranch(socket, m_players[socket]->GetChattingLog());
+            StateWorkBranch(socket, m_players[socket].GetChattingLog());
             break;
         }
         else
         {
-            m_players[socket]->PushChattingBuffer(packet[i]);
+            m_players[socket].PushChattingBuffer(packet[i]);
+            m_players[socket].ReceivePacket();
         }
     }
     return true;
@@ -370,10 +445,8 @@ bool BaseServer::ReassemblePacket(char* packet, const DWORD& bytes, const SOCKET
 
 bool BaseServer::Disconnect(SOCKET socket)
 {
-    socket;
-    ///m_players[socket]->StartLock();
-
-    ///m_players[socket]->EndLock();
+    m_players.erase(socket);
+    closesocket(socket);
     return true;
 }
 
