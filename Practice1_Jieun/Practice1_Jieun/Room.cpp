@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "Room.h"
 
-Room::Room() : m_index(-1), m_name(""), m_maxUser(0)
+Room::Room() : m_index(-1), m_name(""), m_maxUser(0), m_totalPlayers(0)
 {
 }
 
@@ -32,6 +32,11 @@ void Room::SetMaxUser(const int& num)
 	m_maxUser = num;
 }
 
+void Room::SetTotalPlayers(const int& totalPlayer)
+{
+	m_totalPlayers = totalPlayer;
+}
+
 const char* Room::GetName() const
 {
 	// TODO: 여기에 return 문을 삽입합니다.
@@ -44,8 +49,13 @@ const int& Room::GetIndex()
 	return m_index;
 }
 
-const int& Room::GetMaxUser()
+const int& Room::GetMaxUser() const
 {
 	// TODO: 여기에 return 문을 삽입합니다.
 	return m_maxUser;
+}
+
+const int& Room::GetTotalPlayer() const
+{
+	return m_totalPlayers;
 }

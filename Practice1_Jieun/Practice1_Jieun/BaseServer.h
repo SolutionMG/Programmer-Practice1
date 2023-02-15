@@ -63,11 +63,15 @@ private:
 	bool InitializeCommandFunction();
 	bool ReqeustCommandList(const SOCKET& socket);
 	bool RequestExit(const SOCKET& socket);
-	bool RequestUserList(const SOCKET& socket);
 
 	bool RequestRoomCreate(const SOCKET& socket);
 	bool RequestRoomEnter(const SOCKET& socket);
 	bool RequestRoomList(const SOCKET& socket);
+
+	bool RequestUserInfo(const SOCKET& socket);
+	bool RequestUserList(const SOCKET& socket);
+
+	bool RequestRoomInfo(const SOCKET& socket);
 
 	/// 로그온 진행 프로세스
 	void LogOnCommandProcess();

@@ -61,7 +61,7 @@ const WSAOVERLAPPED_EXTEND& ClientInfo::GetOverlappedExtend()
 	return m_over;
 }
 
-const ClientState& ClientInfo::GetState()
+const ClientState& ClientInfo::GetState()const
 {
 	return m_state;
 }

@@ -2,7 +2,7 @@
 #include "PlayerInfo.h"
 
 
-PlayerInfo::PlayerInfo() : m_name{ " " }, m_roomNumber{ -1 }
+PlayerInfo::PlayerInfo() : m_name{ " " }, m_roomNumber{ -1 }, m_roomInTime{""}
 {
 	m_chattingBuffer.reserve(InitailizeServer::MAX_BUFFERSIZE);
 }
@@ -24,6 +24,11 @@ void PlayerInfo::SetRoomNumber(const int& num)
 	m_roomNumber = num;
 }
 
+void PlayerInfo::SetRoomInTime(const std::string time)
+{
+	m_roomInTime = time;
+}
+
 void PlayerInfo::PushChattingBuffer(char word)
 {
 	m_chattingBuffer.emplace_back(word);
@@ -43,4 +48,9 @@ const std::string_view PlayerInfo::GetChattingLog()
 const int& PlayerInfo::GetRoomNumber()
 {
 	return m_roomNumber;
+}
+
+const std::string& PlayerInfo::GetRoomInTime() const
+{
+	return m_roomInTime;
 }

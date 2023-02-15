@@ -2,7 +2,7 @@
 #include "ChattingRoom.h"
 #include <algorithm>
 
-ChattingRoom::ChattingRoom() : m_totalPlayers(0)
+ChattingRoom::ChattingRoom()
 {
 	m_accessorIndex.reserve(20);
 }
@@ -21,17 +21,7 @@ void ChattingRoom::PopAccessor(const SOCKET& socket)
 		m_accessorIndex.erase(iter);
 }
 
-void ChattingRoom::SetTotalPlayers(const int& totalPlayer)
-{
-	m_totalPlayers = totalPlayer;
-}
-
-const int& ChattingRoom::GetTotalPlayer() const
-{
-	return m_totalPlayers;
-}
-
-const std::vector< SOCKET >& ChattingRoom::GetAccessorIndex()
+const std::vector< SOCKET >& ChattingRoom::GetAccessorIndex() const
 {
 	return m_accessorIndex;
 }

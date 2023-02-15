@@ -15,6 +15,8 @@ private:
 	char m_name[InitializeRoom::MAX_ROOMNAME];
 	/// 최대 인원
 	int m_maxUser;
+	/// 채팅방 총인원 수 
+	int m_totalPlayers;
 
 public:
 	explicit Room();
@@ -27,11 +29,14 @@ public:
 	void SetName(const char* name);
 	void SetIndex(const int& index);
 	void SetMaxUser(const int& num);
+	void SetTotalPlayers(const int& totalPlayer);
 
 	///Get
 	const char* GetName() const;
 	const int& GetIndex();
-	const int& GetMaxUser();
+	const int& GetMaxUser() const;
+	const int& GetTotalPlayer() const;
+
 };
 
 #endif // !ROOM_H

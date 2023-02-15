@@ -37,7 +37,7 @@ public:
 	///Get 
 	const SOCKET GetSocket();
 	const WSAOVERLAPPED_EXTEND& GetOverlappedExtend();
-	const ClientState& GetState();
+	const ClientState& GetState() const;
 };
 
 #endif // !CLIENT_H
