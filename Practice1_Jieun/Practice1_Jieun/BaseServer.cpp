@@ -102,8 +102,6 @@ bool BaseServer::InitializeCommandFunction()
     m_commandFunctions.insert({ CommandMessage::ROOMINFO, [&](const SOCKET& socket) { RequestRoomInfo(socket); } });
     m_commandFunctions.insert({ CommandMessage::SECRETMESSAGE, [&](const SOCKET& socket) { RequestNote(socket); } });
 
-    
-
     return true;
 }
 
@@ -541,40 +539,36 @@ bool BaseServer::RequestUserInfo(const SOCKET& socket)
 bool BaseServer::RequestUserList(const SOCKET& socket)
 {
     m_playersLock.lock();
-    m_players[socket].StartLock();
-    std::string_view message = { m_players[socket].GetChattingLog().cbegin(), m_players[socket].GetChattingLog().cend() };
-    m_players[socket].EndLock();
+    auto& player = m_players[socket];
     m_playersLock.unlock();
+
+    std::string_view message = { player.GetChattingLog().cbegin(), player.GetChattingLog().cend() };
 
     if (message.length() > 2)
     {
-        m_playersLock.lock();
-        m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
-        m_players[socket].ReceivePacket();
-        m_playersLock.unlock();
+        player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+        player.ReceivePacket();
         return false;
     }
 
-    m_playersLock.lock();
-    m_players[socket].SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE, sizeof(RenderMessageMacro::DIVIDELINEMESSAGE));
+    player.SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE, sizeof(RenderMessageMacro::DIVIDELINEMESSAGE));
     std::string userNameList = "--------------------------------유저 목록--------------------------------\n\r";
-
-    for (const auto& player : m_players)
+    m_playersLock.lock();
+    for (const auto& p : m_players)
     {
-        if ( player.second.GetState() > ClientState::ACCESS && player.second.GetState() < ClientState::EXIT )
+        if ( p.second.GetState() > ClientState::ACCESS && p.second.GetState() < ClientState::EXIT )
         {
-            userNameList += player.second.GetName();
+            userNameList += p.second.GetName();
             userNameList += "\n\r";
         }
     }
     m_playersLock.unlock();
 
-    m_playersLock.lock();
-    m_players[socket].SendPacket(userNameList.c_str(), static_cast<short>(userNameList.size()));
-    m_players[socket].SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE, sizeof(RenderMessageMacro::DIVIDELINEMESSAGE));
-    m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
-    m_players[socket].ReceivePacket();
-    m_playersLock.unlock();
+    player.SendPacket(userNameList.c_str(), static_cast<short>(userNameList.size()));
+    player.SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE, sizeof(RenderMessageMacro::DIVIDELINEMESSAGE));
+    player.SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE, sizeof(RenderMessageMacro::SELECTCOMMANDMESSAGE));
+    player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+    player.ReceivePacket();
     return true;
 }
 
@@ -590,7 +584,6 @@ bool BaseServer::RequestRoomInfo(const SOCKET& socket)
     {
         player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
         player.ReceivePacket();
-        m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
         return false;
     }
 
@@ -665,6 +658,7 @@ bool BaseServer::RequestNote(const SOCKET& socket)
     if (message.length() <= 2)
     {
         player.SendPacket(RenderMessageMacro::FAILEDCOMMANDMESSAGE, sizeof(RenderMessageMacro::FAILEDCOMMANDMESSAGE));
+        player.SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE, sizeof(RenderMessageMacro::SELECTCOMMANDMESSAGE));
         player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
         player.ReceivePacket();
         return false;
@@ -712,6 +706,7 @@ bool BaseServer::RequestNote(const SOCKET& socket)
     if (isExistPlayer == false)
     {
         player.SendPacket("존재하지 않는 유저입니다.\n\r");
+        player.SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE, sizeof(RenderMessageMacro::SELECTCOMMANDMESSAGE));
         player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
     }
     else
@@ -719,6 +714,7 @@ bool BaseServer::RequestNote(const SOCKET& socket)
         if (name == player.GetName())
         {
             player.SendPacket("본인에게는 귓속말을 할 수 없습니다.\n\r");
+            player.SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE, sizeof(RenderMessageMacro::SELECTCOMMANDMESSAGE));
             player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
         }
         else
@@ -779,6 +775,7 @@ bool BaseServer::RequestRoomCreate(const SOCKET& socket)
     if (maxUser < 2 || maxUser > 20)
     {
         player.SendPacket(RenderMessageMacro::CREATEROOMFAILEDOVERUSERS, sizeof(RenderMessageMacro::CREATEROOMFAILEDOVERUSERS));
+        player.SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE, sizeof(RenderMessageMacro::SELECTCOMMANDMESSAGE));
         player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
         player.ReceivePacket();
         return false;
@@ -788,6 +785,7 @@ bool BaseServer::RequestRoomCreate(const SOCKET& socket)
     {
         //예외처리
         player.SendPacket(RenderMessageMacro::FAILEDCOMMANDMESSAGE, sizeof(RenderMessageMacro::FAILEDCOMMANDMESSAGE));
+        player.SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE, sizeof(RenderMessageMacro::SELECTCOMMANDMESSAGE));
         player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
         player.ReceivePacket();
         return false;
@@ -864,17 +862,18 @@ bool BaseServer::RequestRoomCreate(const SOCKET& socket)
 bool BaseServer::RequestRoomEnter(const SOCKET& socket)
 {
     m_playersLock.lock();
-    m_players[socket].StartLock();
-    std::string message = { m_players[socket].GetChattingLog().cbegin(), m_players[socket].GetChattingLog().cend()};
-    std::string userName = m_players[socket].GetName();
-    m_players[socket].EndLock();
+    auto& player = m_players[socket];;
     m_playersLock.unlock();
+
+    std::string message = { player.GetChattingLog().cbegin(), player.GetChattingLog().cend() };
+    std::string userName = player.GetName();
 
     if (message[1] != ' ')
     {
         m_playersLock.lock();
-        m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
-        m_players[socket].ReceivePacket();
+        player.SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE, sizeof(RenderMessageMacro::SELECTCOMMANDMESSAGE));
+        player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+        player.ReceivePacket();
         m_playersLock.unlock();
         return false;
     }
@@ -889,11 +888,9 @@ bool BaseServer::RequestRoomEnter(const SOCKET& socket)
 
     if (iter == enditer)
     {
-        m_playersLock.lock();
-        m_players[socket].SendPacket(RenderMessageMacro::ROOMENTERFAILEDMESSAGE, sizeof(RenderMessageMacro::ROOMENTERFAILEDMESSAGE));
-        m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
-        m_players[socket].ReceivePacket();
-        m_playersLock.unlock();
+        player.SendPacket(RenderMessageMacro::ROOMENTERFAILEDMESSAGE, sizeof(RenderMessageMacro::ROOMENTERFAILEDMESSAGE));
+        player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+        player.ReceivePacket();
         return false;
     }
 
@@ -906,9 +903,9 @@ bool BaseServer::RequestRoomEnter(const SOCKET& socket)
     if (total == max)
     {
         m_playersLock.lock();
-        m_players[socket].SendPacket(RenderMessageMacro::ROOMENTERFULLMESSAGE, sizeof(RenderMessageMacro::ROOMENTERFULLMESSAGE));
-        m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
-        m_players[socket].ReceivePacket();
+        player.SendPacket(RenderMessageMacro::ROOMENTERFULLMESSAGE, sizeof(RenderMessageMacro::ROOMENTERFULLMESSAGE));
+        player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+        player.ReceivePacket();
         m_playersLock.unlock();
 
         return false;
@@ -967,16 +964,15 @@ bool BaseServer::RequestRoomEnter(const SOCKET& socket)
 bool BaseServer::RequestRoomList(const SOCKET& socket)
 {
     m_playersLock.lock();
-    m_players[socket].StartLock();
-    std::string message = { m_players[socket].GetChattingLog().cbegin(), m_players[socket].GetChattingLog().cend() };
-    m_players[socket].EndLock();
+    auto& player = m_players[socket];
     m_playersLock.unlock();
+    std::string message = { player.GetChattingLog().cbegin(), player.GetChattingLog().cend() };
 
     if (message != CommandMessage::ROOMLIST)
     {
         m_playersLock.lock();
-        m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
-        m_players[socket].ReceivePacket();
+        player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+        player.ReceivePacket();
         m_playersLock.unlock();
         return false;
     }
@@ -989,10 +985,10 @@ bool BaseServer::RequestRoomList(const SOCKET& socket)
     {
         /// 방이 없음.
         m_playersLock.lock();
-        m_players[socket].SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE, sizeof(RenderMessageMacro::DIVIDELINEMESSAGE));
-        m_players[socket].SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE, sizeof(RenderMessageMacro::DIVIDELINEMESSAGE));
-        m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
-        m_players[socket].ReceivePacket();
+        player.SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE, sizeof(RenderMessageMacro::DIVIDELINEMESSAGE));
+        player.SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE, sizeof(RenderMessageMacro::DIVIDELINEMESSAGE));
+        player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+        player.ReceivePacket();
         m_playersLock.unlock();
         return true;
     }
@@ -1024,11 +1020,11 @@ bool BaseServer::RequestRoomList(const SOCKET& socket)
     m_chattRoomLock.unlock();
 
     m_playersLock.lock();
-    m_players[socket].SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE, sizeof(RenderMessageMacro::DIVIDELINEMESSAGE));
-    m_players[socket].SendPacket(roomsInfo.c_str(), static_cast<unsigned short>(roomsInfo.size()));
-    m_players[socket].SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE, sizeof(RenderMessageMacro::DIVIDELINEMESSAGE));
-    m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
-    m_players[socket].ReceivePacket();
+    player.SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE, sizeof(RenderMessageMacro::DIVIDELINEMESSAGE));
+    player.SendPacket(roomsInfo.c_str(), static_cast<unsigned short>(roomsInfo.size()));
+    player.SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE, sizeof(RenderMessageMacro::DIVIDELINEMESSAGE));
+    player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+    player.ReceivePacket();
     m_playersLock.unlock();
 
     return true;
@@ -1116,12 +1112,12 @@ bool BaseServer::Chatting(const SOCKET& socket)
 {
     std::string userMessage = "[";
     m_playersLock.lock();
-    m_players[socket].StartLock();
-    int roomIndex = m_players[socket].GetRoomNumber();
-    userMessage += m_players[socket].GetName();
-    std::string message = { m_players[socket].GetChattingLog().cbegin(), m_players[socket].GetChattingLog().cend() };
-    m_players[socket].EndLock();
+    auto& player = m_players[socket];
     m_playersLock.unlock();
+
+    int roomIndex = player.GetRoomNumber();
+    userMessage += player.GetName();
+    std::string message = { player.GetChattingLog().cbegin(),player.GetChattingLog().cend() };
 
     userMessage += "]";
     userMessage += " ";
