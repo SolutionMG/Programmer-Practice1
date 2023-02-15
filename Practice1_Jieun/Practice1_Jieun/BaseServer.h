@@ -34,7 +34,6 @@ public:
 	explicit BaseServer();
 	virtual ~BaseServer() noexcept;
 
-
 public:
 	bool Initialize();
 	bool Listen();
@@ -47,6 +46,10 @@ private:
 	/// 플레이어 접속 처리 함수
 	bool Accept(WSAOVERLAPPED_EXTEND* over);
 	bool AddNewClient(const SOCKET& socket);
+
+	///텔넷 클라이언트로부터 받은 패킷 재조립
+	bool ReassemblePacket(char* packet, const DWORD& bytes, const SOCKET& socket);
+	bool Disconnect(SOCKET socket);
 
 	///플레이어 상태에 따른 패킷 명령 수행
 	bool StateWorkBranch(const SOCKET& socket, const std::string_view& command);
@@ -64,11 +67,8 @@ private:
 	/// 로그온 진행 프로세스
 	void LogOnCommandProcess();
 
-
-	///텔넷 클라이언트로부터 받은 패킷 재조립
-	bool ReassemblePacket(char* packet, const DWORD& bytes, const SOCKET& socket);
-	bool Disconnect(SOCKET socket);
-
+	///채팅방에서의 대화
+	//bool Chatting(const )
 
 public:
 	void DisplayError(const char* msg);

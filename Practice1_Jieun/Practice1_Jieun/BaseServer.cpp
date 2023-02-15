@@ -104,7 +104,14 @@ bool BaseServer::MainWorkProcess()
         ULONG_PTR completionKey;
         WSAOVERLAPPED* over;
 
-        GetQueuedCompletionStatus(m_iocpHandle, &bytes, &completionKey, &over, INFINITE);
+        bool returnValue = GetQueuedCompletionStatus(m_iocpHandle, &bytes, &completionKey, &over, INFINITE);
+        
+        if (returnValue == false)
+        {
+            DisplayError("GetQueuedCompletionStatus() 실패");
+            return false;
+        }
+        
         SOCKET userKey = static_cast<SOCKET> (completionKey);
         WSAOVERLAPPED_EXTEND* overExtend = reinterpret_cast<WSAOVERLAPPED_EXTEND*>(over);
 
@@ -281,7 +288,6 @@ bool BaseServer::StateWorkBranch(const SOCKET& socket, const std::string_view& c
         m_players[socket].EndLock();
         m_players[socket].ReceivePacket();
         m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
-
     }
     break;
     case ClientState::END:
@@ -294,8 +300,8 @@ bool BaseServer::StateWorkBranch(const SOCKET& socket, const std::string_view& c
     default:
     {
         m_players[socket].ClearChattingBuffer();
-        m_players[socket].ReceivePacket();
         m_players[socket].EndLock();
+        m_players[socket].ReceivePacket();
     }
     break;
     }
@@ -339,7 +345,7 @@ bool BaseServer::CommandWorkBranch(const SOCKET& socket, const std::string_view&
             return true;
         }
     }
-    else if (request.length() > 2) 
+    else if (request.length() >= 2) 
     {
         std::string_view checkCommand2Word = "";
         if (request[1] == ' ')
@@ -447,11 +453,12 @@ bool BaseServer::RequestRoomCreate(const SOCKET& socket)
     m_chattingRooms[m_chatRoomindex].SetIndex(m_chatRoomindex);
     m_chattingRooms[m_chatRoomindex].SetMaxUser(maxUser);
     m_chattingRooms[m_chatRoomindex].SetName(roomName.c_str());
+    m_chattingRooms[m_chatRoomindex].SetTotalPlayers(1);
     m_chattingRooms[m_chatRoomindex].EndLock();
     ++m_chatRoomindex;
     m_chattRoomLock.unlock();
     
-    std::cout <<"["<< m_chatRoomindex<<"] [" << roomName << "] 생성" << std::endl;
+    std::cout <<"["<< m_chatRoomindex - 1<<"] [" << roomName << "] 생성" << std::endl;
 
     m_players[socket].StartLock();
     m_players[socket].SetState(ClientState::ROOM);
@@ -483,7 +490,7 @@ void BaseServer::LogOnCommandProcess()
         {
             m_logOnLock.unlock();
             /// 로그인 하려는 유저가 있을 때 마다만 동작. 2000ms 한번 씩 로그인 유저 존재 검사
-            std::this_thread::sleep_for(2000ms);
+            std::this_thread::sleep_for(1500ms);
         }
 
         else

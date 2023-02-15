@@ -10,6 +10,7 @@ class PlayerInfo final : public ClientInfo
 private:
 	///플레이어 고유 이름
 	char m_name[InitailizePlayer::MAX_NAME];
+
 	///플레이어가 송신 전 입력중인 문자열
 	std::vector<char> m_chattingBuffer;
 	int m_roomNumber;

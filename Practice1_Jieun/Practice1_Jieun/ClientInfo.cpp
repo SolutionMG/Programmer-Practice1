@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "ClientInfo.h"
 
+
 ClientInfo::ClientInfo() : m_socket{ INVALID_SOCKET }, m_over{ WSAOVERLAPPED_EXTEND() }, m_state{ ClientState::END }
 {
 	ZeroMemory(&m_over, sizeof(m_over));

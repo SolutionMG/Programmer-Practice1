@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "PlayerInfo.h"
 
+
 PlayerInfo::PlayerInfo() : m_name{ " " }, m_roomNumber{ -1 }
 {
 	m_chattingBuffer.reserve(InitailizeServer::MAX_BUFFERSIZE);
