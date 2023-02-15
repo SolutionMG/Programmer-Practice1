@@ -24,7 +24,9 @@ private:
 	///채팅방 관리용 변수
 	std::mutex m_chattRoomLock;
 	std::unordered_map<int, ChattingRoom> m_chattingRooms;
-	int m_chatRoomindex;
+
+	std::mutex m_chattRoomNumLock;
+	std::priority_queue<int, std::vector<int>, std::greater<int> > m_charRoomNumber;
 
 	///로그온 프로세스
 	std::mutex m_logOnLock;
@@ -62,13 +64,16 @@ private:
 	bool ReqeustCommandList(const SOCKET& socket);
 	bool RequestExit(const SOCKET& socket);
 	bool RequestUserList(const SOCKET& socket);
+
 	bool RequestRoomCreate(const SOCKET& socket);
+	bool RequestRoomEnter(const SOCKET& socket);
+	bool RequestRoomList(const SOCKET& socket);
 
 	/// 로그온 진행 프로세스
 	void LogOnCommandProcess();
 
 	///채팅방에서의 대화
-	//bool Chatting(const )
+	bool Chatting(const SOCKET& socket);
 
 public:
 	void DisplayError(const char* msg);

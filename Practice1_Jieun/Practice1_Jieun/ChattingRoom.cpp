@@ -8,14 +8,15 @@ ChattingRoom::ChattingRoom() : m_totalPlayers(0)
 }
 ChattingRoom::~ChattingRoom() noexcept = default;
 
-void ChattingRoom::PushAccessor( const int& index )
+void ChattingRoom::PushAccessor( const SOCKET& socket)
 {
-	m_accessorIndex.push_back(index);
+	m_accessorIndex.push_back(socket);
+	std::cout << socket << "Ãß°¡" << std::endl;
 }
 
-void ChattingRoom::PopAccessor(const int index)
+void ChattingRoom::PopAccessor(const SOCKET& socket)
 {
-	auto iter = find(m_accessorIndex.begin(), m_accessorIndex.end(), index);
+	auto iter = find(m_accessorIndex.begin(), m_accessorIndex.end(), socket);
 	if (iter != m_accessorIndex.end())
 		m_accessorIndex.erase(iter);
 }
@@ -25,12 +26,12 @@ void ChattingRoom::SetTotalPlayers(const int& totalPlayer)
 	m_totalPlayers = totalPlayer;
 }
 
-const int& ChattingRoom::GetTotalPlayer()
+const int& ChattingRoom::GetTotalPlayer() const
 {
 	return m_totalPlayers;
 }
 
-const std::vector< int >& ChattingRoom::GetAccessorIndex()
+const std::vector< SOCKET >& ChattingRoom::GetAccessorIndex()
 {
 	return m_accessorIndex;
 }

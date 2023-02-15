@@ -10,8 +10,8 @@ class ChattingRoom: public Room
 private:
 	/// 채팅방 총인원 수 
 	int m_totalPlayers;
-	/// 해당 채팅방 접속자들의 고유 인덱스
-	std::vector<int> m_accessorIndex;
+	/// 해당 채팅방 접속자들의 소켓들
+	std::vector<SOCKET> m_accessorIndex;
 
 public:
 	explicit ChattingRoom();
@@ -19,15 +19,15 @@ public:
 
 public:
 	
-	void PushAccessor(const int& index);
-	void PopAccessor(const int index);
+	void PushAccessor(const SOCKET& socket);
+	void PopAccessor(const SOCKET& socket);
 
 	///Set
 	void SetTotalPlayers(const int& totalPlayer);
 
 	///Get
-	const int& GetTotalPlayer();
-	const std::vector<int>& GetAccessorIndex();
+	const int& GetTotalPlayer() const;
+	const std::vector<SOCKET>& GetAccessorIndex();
 };
 
 #endif // !CHATTINGROOM_H

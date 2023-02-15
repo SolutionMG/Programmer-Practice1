@@ -23,7 +23,6 @@
 #include<queue>
 #include<mutex>
 
-
 ///USER
 #include "Define.h"
 

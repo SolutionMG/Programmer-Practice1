@@ -19,7 +19,7 @@ void PlayerInfo::SetName(const char* name)
 	strcpy_s(m_name, name);
 }
 
-void PlayerInfo::SetPlayerRoomNumber(const int& num)
+void PlayerInfo::SetRoomNumber(const int& num)
 {
 	m_roomNumber = num;
 }
@@ -40,7 +40,7 @@ const std::string_view PlayerInfo::GetChattingLog()
 	return str;
 }
 
-const int& PlayerInfo::GetPlayerRoomNumber()
+const int& PlayerInfo::GetRoomNumber()
 {
 	return m_roomNumber;
 }

@@ -21,12 +21,12 @@ public:
 
 	///Set
 	void SetName(const char* name);
-	void SetPlayerRoomNumber(const int& num);
+	void SetRoomNumber(const int& num);
 
 	///Get
 	const char* GetName() const;
 	const std::string_view GetChattingLog();
-	const int& GetPlayerRoomNumber();
+	const int& GetRoomNumber();
 
 
 	void PushChattingBuffer(char word);
