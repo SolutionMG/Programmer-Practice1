@@ -745,7 +745,7 @@ bool BaseServer::RequestRoomCreate(const SOCKET& socket)
     m_playersLock.unlock();
     std::string_view message = { player.GetChattingLog().cbegin(), player.GetChattingLog().cend() };
 
-    if (message.length() <= 3)
+    if (message.length() <= 4)
     {
         player.SendPacket(RenderMessageMacro::FAILEDCOMMANDMESSAGE, sizeof(RenderMessageMacro::FAILEDCOMMANDMESSAGE));
         player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
@@ -753,7 +753,28 @@ bool BaseServer::RequestRoomCreate(const SOCKET& socket)
         return false;
     }
 
-    int maxUser = message[2] - '0';
+    std::string max = "";
+    std::string roomName = "";
+    bool flag = false;
+    for (int i = 2; i < message.length(); ++i)
+    {
+        if (message[i] == ' ')
+        {
+            flag = true;
+        }
+
+        if (flag == false)
+        {
+            max += message[i];
+        }
+        else
+        {
+            roomName += message[i];
+        }
+    }
+
+    int maxUser = atoi(max.c_str());
+
     /// 인원 초과
     if (maxUser < 2 || maxUser > 20)
     {
@@ -763,17 +784,16 @@ bool BaseServer::RequestRoomCreate(const SOCKET& socket)
         return false;
     }
     
-    if (message[3] != '0')
+    if (message[3] != ' ')
     {
         //예외처리
-        player.SendPacket(RenderMessageMacro::CREATEROOMFAILEDOVERUSERS, sizeof(RenderMessageMacro::CREATEROOMFAILEDOVERUSERS));
+        player.SendPacket(RenderMessageMacro::FAILEDCOMMANDMESSAGE, sizeof(RenderMessageMacro::FAILEDCOMMANDMESSAGE));
         player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
         player.ReceivePacket();
         return false;
     }
 
     /// 방이름 여부 
-    std::string roomName = { message.cbegin() + 4, message.cend() };
     
     m_playersLock.lock();
     for (const auto& room : m_chattingRooms)
@@ -1165,9 +1185,35 @@ bool BaseServer::ReassemblePacket(char* packet, const DWORD& bytes, const SOCKET
 bool BaseServer::Disconnect(SOCKET socket)
 {
     m_playersLock.lock();
+    auto& player = m_players[socket];
+    m_playersLock.unlock();
+
+    if (player.GetState() == ClientState::ROOM)
+    {
+        m_chattRoomLock.lock();
+        auto& room = m_chattingRooms[player.GetRoomNumber()];
+        m_chattRoomLock.unlock();
+
+        int total = room.GetTotalPlayer();
+        if (total == 1)
+        {
+            m_chattRoomNumLock.lock();
+            m_charRoomNumber.push(room.GetIndex());
+            m_chattRoomNumLock.unlock();
+
+            //방폭파
+            m_chattRoomLock.lock();
+            m_chattingRooms.erase(room.GetIndex());
+            m_chattRoomLock.unlock();
+        }
+        else
+        {
+            room.SetTotalPlayers(--total);
+        }
+    }
+
     std::string_view name = m_players[socket].GetName();
     m_players.erase(socket);
-    m_playersLock.unlock();
     closesocket(socket);
 
     std::cout << "[" << socket << "] " << name << " 유저 접속 종료" << std::endl;
