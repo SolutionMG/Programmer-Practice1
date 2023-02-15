@@ -37,25 +37,32 @@ void Room::SetTotalPlayers(const int& totalPlayer)
 	m_totalPlayers = totalPlayer;
 }
 
+void Room::SetRoomInTime(const std::string& inTime)
+{
+	m_inTime = inTime;
+}
+
 const char* Room::GetName() const
 {
-	// TODO: 여기에 return 문을 삽입합니다.
 	return m_name;
 }
 
 const int& Room::GetIndex()
 {
-	// TODO: 여기에 return 문을 삽입합니다.
 	return m_index;
 }
 
 const int& Room::GetMaxUser() const
 {
-	// TODO: 여기에 return 문을 삽입합니다.
 	return m_maxUser;
 }
 
 const int& Room::GetTotalPlayer() const
 {
 	return m_totalPlayers;
+}
+
+const std::string& Room::GetRoomInTime() const
+{
+	return m_inTime;
 }

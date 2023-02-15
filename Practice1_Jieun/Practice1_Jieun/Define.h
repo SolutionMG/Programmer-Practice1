@@ -33,7 +33,7 @@ namespace RenderMessageMacro
 	constexpr char SELECTCOMMANDMESSAGE[] = "명령어 안내(H) 종료(X)\n\r";
 
 	constexpr char GUIDEMESSAGE[] = 
-		"[H] - 명령어 목록 안내\n\r[US] - 접속 유저 목록\n\r[LT] - 대화방 목록\n\r[O] [최대인원] [방제목] - 대화방 생성\n\r[J] [방번호] - 대화방 입장\n\r[PF] [유저이름] - 이용자 정보 보기\n\r[X] - 접속종료\n\r";
+		"[H] - 명령어 목록 안내\n\r[US] - 접속 유저 목록\n\r[LT] - 대화방 목록\n\r[O] [최대인원] [방제목] - 대화방 생성\n\r[J] [방번호] - 대화방 입장\n\r[PF] [유저이름] - 이용자 정보 보기\n\r[ST] [방번호] - 대화방 정보 보기\n\r[X] - 접속종료\n\r";
 
 	constexpr char CREATEROOMFAILEDMESSAGE[] = "** 이미 동일한 이름의 방이 존재합니다. 다른 이름을 사용해주세요.\n\r";
 	constexpr char CREATEROOMFAILEDOVERUSERS[] = "** [최소 인원: 2명, 최대 인원: 20명] 조건에 맞지 않습니다.\n\r";

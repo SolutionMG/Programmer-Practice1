@@ -595,6 +595,17 @@ bool BaseServer::RequestRoomInfo(const SOCKET& socket)
     int index = atoi(roomIndex.c_str());
     std::string sendMessage = "[";
 
+    ///현재 시간
+    ///입장 시간 기입
+    std::string roomInTime = "";
+    char timebuffer[64];
+    time_t currentTime = time(NULL);
+    tm currentTm;
+    localtime_s(&currentTm, &currentTime);
+
+    strftime(timebuffer, sizeof(timebuffer), "%m-%d-%Y %X", &currentTm);
+    roomInTime = timebuffer;
+
     m_chattRoomLock.lock();
     for (const auto& room : m_chattingRooms)
     {
@@ -605,23 +616,24 @@ bool BaseServer::RequestRoomInfo(const SOCKET& socket)
             char roomMax[8];
             _itoa_s(room.second.GetTotalPlayer(), roomTotal, 10);
             _itoa_s(room.second.GetMaxUser(), roomMax, 10);
-            ///현재 시간
-            ///입장 시간 기입
-            std::string roomInTime = "";
-            char timebuffer[64];
-            time_t currentTime = time(NULL);
-            tm currentTm;
-            localtime_s(&currentTm, &currentTime);
 
-            strftime(timebuffer, sizeof(timebuffer), "%m-%d-%Y %X", &currentTm);
-            roomInTime = timebuffer;
+            sendMessage += roomIndex;
+            sendMessage += "] (";
+            sendMessage += roomTotal;
+            sendMessage += "/";
+            sendMessage += roomMax;
+            sendMessage += ") ";
+            sendMessage += room.second.GetName();
+            sendMessage += "\n\r";
+            sendMessage += "개설시간:   ";
+            sendMessage += room.second.GetRoomInTime();
+
             for (const auto& id : room.second.GetAccessorIndex())
             {
                 m_playersLock.lock();
+                sendMessage += "\n\r참여자:";
                 sendMessage += m_players[id].GetName();
-                sendMessage += "]";
-
-                sendMessage += "    ";
+                sendMessage += "    참여시간:   ";
                 sendMessage += m_players[id].GetRoomInTime();
                 sendMessage += "\n\r";
                 m_playersLock.unlock();
@@ -629,11 +641,13 @@ bool BaseServer::RequestRoomInfo(const SOCKET& socket)
             player.SendPacket(RenderMessageMacro::ROOMINFOLINEMESSAGE, sizeof(RenderMessageMacro::ROOMINFOLINEMESSAGE));
             player.SendPacket(sendMessage.c_str(), static_cast<unsigned short> (sendMessage.size()));
             player.SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE, sizeof(RenderMessageMacro::DIVIDELINEMESSAGE));
-
+            
             break;
         }
     }
     m_chattRoomLock.unlock();
+    player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE, sizeof(RenderMessageMacro::COMMANDWAITMESSAGE));
+    player.ReceivePacket();
     return true;
 }
 
@@ -689,18 +703,6 @@ bool BaseServer::RequestRoomCreate(const SOCKET& socket)
     m_charRoomNumber.pop();
     m_chattRoomNumLock.unlock();
 
-    m_chattRoomLock.lock();
-    m_chattingRooms[number].StartLock();
-    m_chattingRooms[number].SetIndex(number);
-    m_chattingRooms[number].SetMaxUser(maxUser);
-    m_chattingRooms[number].SetName(roomName.c_str());
-    m_chattingRooms[number].SetTotalPlayers(1);
-    m_chattingRooms[number].PushAccessor(socket);
-    m_chattingRooms[number].EndLock();
-    m_chattRoomLock.unlock();
-    
-    std::cout <<"["<< number <<"] [" << roomName << "] 생성" << std::endl;
-
     ///입장 시간 기입
     std::string roomInTime = "";
     ///현재 시간
@@ -711,6 +713,19 @@ bool BaseServer::RequestRoomCreate(const SOCKET& socket)
 
     strftime(timebuffer, sizeof(timebuffer), "%m-%d-%Y %X", &currentTm);
     roomInTime = timebuffer;
+
+    m_chattRoomLock.lock();
+    m_chattingRooms[number].StartLock();
+    m_chattingRooms[number].SetIndex(number);
+    m_chattingRooms[number].SetMaxUser(maxUser);
+    m_chattingRooms[number].SetName(roomName.c_str());
+    m_chattingRooms[number].SetTotalPlayers(1);
+    m_chattingRooms[number].PushAccessor(socket);
+    m_chattingRooms[number].EndLock();
+    m_chattingRooms[number].SetRoomInTime(roomInTime);
+    m_chattRoomLock.unlock();
+    
+    std::cout <<"["<< number <<"] [" << roomName << "] 생성" << std::endl;
 
     m_playersLock.lock();
     m_players[socket].StartLock();

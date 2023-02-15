@@ -17,6 +17,8 @@ private:
 	int m_maxUser;
 	/// 채팅방 총인원 수 
 	int m_totalPlayers;
+	/// 방 개설 시간
+	std::string m_inTime;
 
 public:
 	explicit Room();
@@ -30,12 +32,14 @@ public:
 	void SetIndex(const int& index);
 	void SetMaxUser(const int& num);
 	void SetTotalPlayers(const int& totalPlayer);
+	void SetRoomInTime(const std::string& inTime);
 
 	///Get
 	const char* GetName() const;
 	const int& GetIndex();
 	const int& GetMaxUser() const;
 	const int& GetTotalPlayer() const;
+	const std::string& GetRoomInTime() const;
 
 };
 
