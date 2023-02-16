@@ -12,7 +12,7 @@ private:
 	char m_name[InitailizePlayer::MAX_NAME];
 
 	///플레이어가 송신 전 입력중인 문자열
-	std::vector<char> m_chattingBuffer;
+	std::vector< char > m_chattingBuffer;
 	int m_roomNumber;
 
 	///방 참여 시각
@@ -23,9 +23,9 @@ public:
 	virtual ~PlayerInfo() noexcept;
 
 	///Set
-	void SetName(const char* name);
-	void SetRoomNumber(const int& num);
-	void SetRoomInTime(const std::string time);
+	void SetName( const char* name );
+	void SetRoomNumber( const int& num );
+	void SetRoomInTime( const std::string time );
 
 	///Get
 	const char* GetName() const;
@@ -33,9 +33,10 @@ public:
 	const int& GetRoomNumber();
 	const std::string& GetRoomInTime() const;
 
-	void PushChattingBuffer(char word);
+	///채팅버퍼 
+	void PushChattingBuffer( char word );
 	void ClearChattingBuffer();
 	 
 };
-
 #endif // !PLAYERINFO_H
+

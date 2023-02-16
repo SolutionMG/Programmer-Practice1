@@ -24,15 +24,12 @@ public:
 	explicit Room();
 	virtual ~Room() noexcept;
 
-	void StartLock();
-	void EndLock();
-
 	///Set
-	void SetName(const char* name);
-	void SetIndex(const int& index);
-	void SetMaxUser(const int& num);
-	void SetTotalPlayers(const int& totalPlayer);
-	void SetRoomInTime(const std::string& inTime);
+	void SetName( const char* name );
+	void SetIndex( const int& index );
+	void SetMaxUser( const int& num );
+	void SetTotalPlayers( const int& totalPlayer );
+	void SetRoomInTime( const std::string& inTime );
 
 	///Get
 	const char* GetName() const;
@@ -41,6 +38,8 @@ public:
 	const int& GetTotalPlayer() const;
 	const std::string& GetRoomInTime() const;
 
+	///Lock
+	void StartLock();
+	void EndLock();
 };
-
 #endif // !ROOM_H

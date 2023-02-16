@@ -2,8 +2,8 @@
 
 #ifndef BASESERVER_H
 #define BASESERVER_H
-
 #include <functional>
+
 
 class PlayerInfo;
 class ChattingRoom;
@@ -25,6 +25,7 @@ private:
 	std::mutex m_chattRoomLock;
 	std::unordered_map<int, ChattingRoom> m_chattingRooms;
 
+	///채팅방 번호 관리용 변수
 	std::mutex m_chattRoomNumLock;
 	std::priority_queue<int, std::vector<int>, std::greater<int> > m_charRoomNumber;
 
@@ -36,7 +37,6 @@ public:
 	explicit BaseServer();
 	virtual ~BaseServer() noexcept;
 
-public:
 	bool Initialize();
 	bool Listen();
 	bool OpenServer();
@@ -67,14 +67,11 @@ private:
 	bool RequestRoomCreate(const SOCKET& socket);
 	bool RequestRoomEnter(const SOCKET& socket);
 	bool RequestRoomList(const SOCKET& socket);
-
-	bool RequestUserInfo(const SOCKET& socket);
-	bool RequestUserList(const SOCKET& socket);
-
 	bool RequestRoomInfo(const SOCKET& socket);
 
+	bool RequestUserList(const SOCKET& socket);
+	bool RequestUserInfo(const SOCKET& socket);
 	bool RequestNote(const SOCKET& socket);
-
 
 	/// 로그온 진행 프로세스
 	void LogOnCommandProcess();
@@ -82,9 +79,7 @@ private:
 	///채팅방에서의 대화
 	bool Chatting(const SOCKET& socket);
 
-public:
+private:
 	void DisplayError(const char* msg);
 };
-
-
 #endif // !BASESERV

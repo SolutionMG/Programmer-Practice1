@@ -1,8 +1,10 @@
+
+
 #include "pch.h"
 #include "ClientInfo.h"
 
 
-ClientInfo::ClientInfo() : m_socket{ INVALID_SOCKET }, m_over{ WSAOVERLAPPED_EXTEND() }, m_state{ ClientState::END }
+ClientInfo::ClientInfo() : m_socket{ INVALID_SOCKET }, m_over{ WSAOVERLAPPED_EXTEND() }, m_state{ EClientState::END }
 {
 	ZeroMemory(&m_over, sizeof(m_over));
 	m_over.wsaBuffer.buf = m_over.networkBuffer;
@@ -24,7 +26,7 @@ void ClientInfo::ReceivePacket()
 	m_receiveLock.unlock();
 }
 
-void ClientInfo::SendPacket(const std::string_view& data)
+void ClientInfo::SendPacket( const std::string_view& data )
 {
 	/// Overlapped Send ø‰√ª
 	WSAOVERLAPPED_EXTEND* over = new WSAOVERLAPPED_EXTEND;
@@ -51,7 +53,7 @@ const SOCKET ClientInfo::GetSocket()
 	return m_socket;
 }
 
-void ClientInfo::SetSocket(const SOCKET& s)
+void ClientInfo::SetSocket( const SOCKET& s )
 {
 	m_socket = s;
 }
@@ -61,21 +63,21 @@ const WSAOVERLAPPED_EXTEND& ClientInfo::GetOverlappedExtend()
 	return m_over;
 }
 
-const ClientState& ClientInfo::GetState()const
+const EClientState& ClientInfo::GetState()const
 {
 	return m_state;
 }
 
-void ClientInfo::SetOverlappedExtend(const WSAOVERLAPPED_EXTEND& over)
+void ClientInfo::SetOverlappedExtend( const WSAOVERLAPPED_EXTEND& over )
 {
-	memcpy_s(&m_over, sizeof(m_over), &over, sizeof(over));
+	memcpy_s( &m_over, sizeof( m_over ), &over, sizeof( over ) );
 }
-void ClientInfo::SetOverlappedOperation(const EOperationType& operation)
+void ClientInfo::SetOverlappedOperation( const EOperationType& operation )
 {
 	m_over.opType = operation;
 }
 
-void ClientInfo::SetState(const ClientState& state)
+void ClientInfo::SetState( const EClientState& state )
 {
 	m_state = state;
 }

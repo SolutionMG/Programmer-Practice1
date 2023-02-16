@@ -1,15 +1,16 @@
+
+
 #include "pch.h"
 #include "BaseServer.h"
 #include "ChattingRoom.h"
 #include "PlayerInfo.h"
-
 #include <algorithm>
 #include <chrono>
 #include <thread>
 #include <ctime>
 
-/// Static 변수
-BaseServer::BaseServer() : m_iocpHandle(NULL), m_listenSocket(INVALID_SOCKET)
+
+BaseServer::BaseServer() : m_iocpHandle( NULL ), m_listenSocket( INVALID_SOCKET )
 {   
 }
 
@@ -18,37 +19,38 @@ BaseServer::~BaseServer() noexcept = default;
 bool BaseServer::Initialize()
 {
     ///Initialize
-    m_players.reserve(100);
-    for (int i = 0; i < 1000; ++i) //방번호
+    m_players.reserve( 100 );
+
+    for (int i = 0; i < 1000; ++i) 
         m_charRoomNumber.push(i);
 
     InitializeCommandFunction();
 
-    ///한국어 출력
-    std::wcout.imbue(std::locale("korean"));
+    ///오류 메시지 한국어 출력
+    std::wcout.imbue( std::locale( "korean" ) );
 
     WSADATA wsaData;
-    int returnValue = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (returnValue != 0)
+    int returnValue = WSAStartup( MAKEWORD( 2, 2 ), &wsaData );
+    if ( returnValue != 0 )
     {
-        DisplayError("WSAStartup Initialize()");
+        DisplayError( "WSAStartup Initialize()" );
         return false;
     }
 
-    m_listenSocket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+    m_listenSocket = WSASocket( AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED );
 
-    if (m_listenSocket == INVALID_SOCKET)
+    if ( m_listenSocket == INVALID_SOCKET )
     {
-        DisplayError("WSASocket Initialize()");
+        DisplayError( "WSASocket Initialize()" );
         return false;
     }
 
     ///Nagle Off Option
     int socketOption = 1;
-    returnValue = setsockopt(m_listenSocket, SOL_SOCKET, TCP_NODELAY, (const char*)(&socketOption), sizeof(socketOption));
-    if (returnValue != 0)
+    returnValue = setsockopt( m_listenSocket, SOL_SOCKET, TCP_NODELAY, reinterpret_cast< const char* >( &socketOption ), sizeof( socketOption ) );
+    if ( returnValue != 0 )
     {
-        DisplayError("setsockopt Initialize()");
+        DisplayError( "setsockopt Initialize()" );
         return false;
     }
 
@@ -59,17 +61,17 @@ bool BaseServer::Initialize()
 bool BaseServer::OpenServer()
 {
     /// IOCP 객체 생성
-    m_iocpHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 0);
-    CreateIoCompletionPort(reinterpret_cast<HANDLE>(m_listenSocket), m_iocpHandle, 0, 0);
+    m_iocpHandle = CreateIoCompletionPort( INVALID_HANDLE_VALUE, NULL, NULL, 0 );
+    CreateIoCompletionPort( reinterpret_cast< HANDLE >( m_listenSocket ), m_iocpHandle, 0, 0 );
 
     WSAOVERLAPPED_EXTEND over;
-    Accept(&over);
+    Accept( &over );
 
     ///WorkerThread 생성 - Accept, Send, Recv 기능 수행 IOCP 쓰레드 풀을 통해 TOTALCORE/2 개수의 스레드로 동작
-    std::vector<std::thread> workerThreads;
-    for (int i = 0; i < (InitailizeServer::TOTALCORE / 2); ++i)
+    std::vector< std::thread > workerThreads;
+    for (int i = 0; i < ( InitailizeServer::TOTALCORE / 2 ); ++i)
     {
-        workerThreads.emplace_back([&]() {MainWorkProcess(); });
+        workerThreads.emplace_back( [&]() {MainWorkProcess(); } );
     }
 
     ///Other Thread...
@@ -83,7 +85,7 @@ bool BaseServer::OpenServer()
         wthread.join();
     }
 
-    closesocket(m_listenSocket);
+    closesocket( m_listenSocket );
     WSACleanup();
 
     return false;
@@ -91,50 +93,63 @@ bool BaseServer::OpenServer()
 
 bool BaseServer::InitializeCommandFunction()
 {
-    m_commandFunctions.reserve(10);
-    m_commandFunctions.insert({ CommandMessage::COMMANDLIST, [&](const SOCKET& socket) { ReqeustCommandList(socket);} });
-    m_commandFunctions.insert({ CommandMessage::USERLIST, [&](const SOCKET& socket) { RequestUserList(socket); } });
-    m_commandFunctions.insert({ CommandMessage::EXIT, [&](const SOCKET& socket) { RequestExit(socket); } });
-    m_commandFunctions.insert({ CommandMessage::ROOMCREATE, [&](const SOCKET& socket) { RequestRoomCreate(socket); } });
-    m_commandFunctions.insert({ CommandMessage::ROOMLIST, [&](const SOCKET& socket) { RequestRoomList(socket); } });
-    m_commandFunctions.insert({ CommandMessage::ROOMENTER, [&](const SOCKET& socket) { RequestRoomEnter(socket); } });
-    m_commandFunctions.insert({ CommandMessage::PLAYERINFO, [&](const SOCKET& socket) { RequestUserInfo(socket); } });
-    m_commandFunctions.insert({ CommandMessage::ROOMINFO, [&](const SOCKET& socket) { RequestRoomInfo(socket); } });
-    m_commandFunctions.insert({ CommandMessage::SECRETMESSAGE, [&](const SOCKET& socket) { RequestNote(socket); } });
+    m_commandFunctions.reserve( 10 );
 
+    ///대문자 명령어
+    m_commandFunctions.insert({ CommandMessage::COMMANDLIST,    [&](const SOCKET& socket) { ReqeustCommandList( socket );} });
+    m_commandFunctions.insert({ CommandMessage::USERLIST,       [&](const SOCKET& socket) { RequestUserList( socket ); } });
+    m_commandFunctions.insert({ CommandMessage::EXIT,           [&](const SOCKET& socket) { RequestExit( socket ); } });
+    m_commandFunctions.insert({ CommandMessage::ROOMCREATE,     [&](const SOCKET& socket) { RequestRoomCreate( socket ); } });
+    m_commandFunctions.insert({ CommandMessage::ROOMLIST,       [&](const SOCKET& socket) { RequestRoomList( socket ); } });
+    m_commandFunctions.insert({ CommandMessage::ROOMENTER,      [&](const SOCKET& socket) { RequestRoomEnter( socket ); } });
+    m_commandFunctions.insert({ CommandMessage::PLAYERINFO,     [&](const SOCKET& socket) { RequestUserInfo( socket ); } });
+    m_commandFunctions.insert({ CommandMessage::ROOMINFO,       [&](const SOCKET& socket) { RequestRoomInfo( socket ); } });
+    m_commandFunctions.insert({ CommandMessage::SECRETMESSAGE,  [&](const SOCKET& socket) { RequestNote( socket ); } });
+
+    ///소문자 명령어
+    m_commandFunctions.insert({ CommandMessage::COMMANDLIST_S,    [&](const SOCKET& socket) { ReqeustCommandList(socket);} });
+    m_commandFunctions.insert({ CommandMessage::USERLIST_S,       [&](const SOCKET& socket) { RequestUserList(socket); } });
+    m_commandFunctions.insert({ CommandMessage::EXIT_S,           [&](const SOCKET& socket) { RequestExit(socket); } });
+    m_commandFunctions.insert({ CommandMessage::ROOMCREATE_S,     [&](const SOCKET& socket) { RequestRoomCreate(socket); } });
+    m_commandFunctions.insert({ CommandMessage::ROOMLIST_S,       [&](const SOCKET& socket) { RequestRoomList(socket); } });
+    m_commandFunctions.insert({ CommandMessage::ROOMENTER_S,      [&](const SOCKET& socket) { RequestRoomEnter(socket); } });
+    m_commandFunctions.insert({ CommandMessage::PLAYERINFO_S,     [&](const SOCKET& socket) { RequestUserInfo(socket); } });
+    m_commandFunctions.insert({ CommandMessage::ROOMINFO_S,       [&](const SOCKET& socket) { RequestRoomInfo(socket); } });
+    m_commandFunctions.insert({ CommandMessage::SECRETMESSAGE_S,  [&](const SOCKET& socket) { RequestNote(socket); } });
     return true;
 }
 
 bool BaseServer::MainWorkProcess()
 {
-    while (true)
+    while ( true )
     {
         DWORD bytes;
         ULONG_PTR completionKey;
         WSAOVERLAPPED* over;
 
-        bool returnValue = GetQueuedCompletionStatus(m_iocpHandle, &bytes, &completionKey, &over, INFINITE);
+        bool returnValue = GetQueuedCompletionStatus( m_iocpHandle, &bytes, &completionKey, &over, INFINITE );
         
-        SOCKET userKey = static_cast<SOCKET> (completionKey);
-        WSAOVERLAPPED_EXTEND* overExtend = reinterpret_cast<WSAOVERLAPPED_EXTEND*>(over);
+        SOCKET userKey = static_cast< SOCKET > ( completionKey );
+        WSAOVERLAPPED_EXTEND* overExtend = reinterpret_cast< WSAOVERLAPPED_EXTEND* >( over );
 
-        switch (overExtend->opType)
+        switch ( overExtend->opType )
         {
         case EOperationType::RECV:
         {
-            if (bytes == 0 || returnValue == false)
+            if ( bytes == 0 || returnValue == false )
             {
-                Disconnect(userKey);
+                Disconnect( userKey );
                 break;
             }
-            ReassemblePacket(overExtend->networkBuffer, bytes, userKey);
+            ReassemblePacket( overExtend->networkBuffer, bytes, userKey );
         }
         break;
 
         case EOperationType::SEND:
         {
-            if (bytes == 0 || returnValue == false) {
-                Disconnect(userKey);
+            if ( bytes == 0 || returnValue == false ) 
+            {
+                Disconnect( userKey );
                 break;
             }
             delete over;
@@ -144,19 +159,20 @@ bool BaseServer::MainWorkProcess()
 
         case EOperationType::ACCEPT:
         {
-            if (returnValue == false)
+            if ( returnValue == false )
             {
-
+                Disconnect( userKey );
+                break;
             }
 
             userKey = overExtend->socket;
             std::cout << "ACCEPT Player [" << userKey << "]" << std::endl;
-            AddNewClient(userKey);
+            AddNewClient( userKey );
             m_playersLock.lock();
             m_players[userKey].ReceivePacket();
             m_playersLock.unlock();
 
-            Accept(overExtend);
+            Accept( overExtend );
         }
         break;
         }
@@ -167,24 +183,24 @@ bool BaseServer::MainWorkProcess()
 bool BaseServer::Listen()
 {
     SOCKADDR_IN serverAddr;
-    ZeroMemory(&serverAddr, sizeof(serverAddr));
+    ZeroMemory( &serverAddr, sizeof( serverAddr ) );
     serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(InitailizeServer::SERVERPORT);
-    serverAddr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
+    serverAddr.sin_port = htons( InitailizeServer::SERVERPORT );
+    serverAddr.sin_addr.S_un.S_addr = htonl( INADDR_ANY );
 
     int returnValue = -1;
-    returnValue = bind(m_listenSocket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr));
+    returnValue = bind( m_listenSocket, reinterpret_cast< sockaddr* >( &serverAddr ), sizeof( serverAddr ) );
 
-    if (returnValue != 0)
+    if ( returnValue != 0 )
     {
-        DisplayError("bind Listen()");
+        DisplayError( "bind Listen()" );
         return false;
     }
 
-    returnValue = listen(m_listenSocket, SOMAXCONN);
-    if (returnValue != 0)
+    returnValue = listen( m_listenSocket, SOMAXCONN );
+    if ( returnValue != 0 )
     {
-        DisplayError("listen Listen()");
+        DisplayError( "listen Listen()" );
         return false;
     }
 
@@ -192,77 +208,78 @@ bool BaseServer::Listen()
     return true;
 }
 
-bool BaseServer::Accept(WSAOVERLAPPED_EXTEND* over)
+bool BaseServer::Accept( WSAOVERLAPPED_EXTEND* over )
 {
-    SOCKET socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
-    if (socket == INVALID_SOCKET)
+    SOCKET socket = WSASocket( AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED );
+    if ( socket == INVALID_SOCKET )
     {
-        DisplayError("WSAStartup Accept()");
+        DisplayError( "WSAStartup Accept()" );
         return false;
     }
 
     ///Nagle Off Option
     int socketOption = 1;
-    int returnValue = setsockopt(socket, SOL_SOCKET, TCP_NODELAY, (const char*)(&socketOption), sizeof(socketOption));
-    if (returnValue != 0)
+    int returnValue = setsockopt( socket, SOL_SOCKET, TCP_NODELAY, reinterpret_cast< const char* >( &socketOption ), sizeof( socketOption ));
+    if ( returnValue != 0 )
     {
-        DisplayError("setsockopt Accept()");
+        DisplayError( "setsockopt Accept()" );
         return false;
     }
 
-    ZeroMemory(&over->over, sizeof(over->over));
+    ZeroMemory( &over->over, sizeof( over->over ) );
 
     DWORD bytes;
     over->opType = EOperationType::ACCEPT;
     over->socket = socket;
 
-    bool returnValue2 = AcceptEx(m_listenSocket, socket, over->networkBuffer, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, &bytes, &over->over);
-    if (returnValue2 == false)
+    bool returnValue2 = AcceptEx( m_listenSocket, socket, over->networkBuffer, 0, sizeof( SOCKADDR_IN ) + 16, sizeof( SOCKADDR_IN ) + 16, &bytes, &over->over );
+    if ( returnValue2 == false )
     {
         ///작업이 성공적으로 시작, 아직 진행 중
-        if (WSAGetLastError() == ERROR_IO_PENDING)
+        if ( WSAGetLastError() == ERROR_IO_PENDING )
             return true;
 
-        DisplayError("AcceptEx Accept()");
+        DisplayError( "AcceptEx Accept()" );
         return false;
     }
 
     return true;
 }
 
-bool BaseServer::AddNewClient(const SOCKET& socket)
+bool BaseServer::AddNewClient( const SOCKET& socket )
 {
     m_playersLock.lock();
     m_players[socket].StartLock();
-    m_players[socket].SetSocket(socket);
-    m_players[socket].SetOverlappedOperation(EOperationType::RECV);
-    m_players[socket].SetState(ClientState::ACCESS);
+    m_players[socket].SetSocket( socket );
+    m_players[socket].SetOverlappedOperation( EOperationType::RECV );
+    m_players[socket].SetState( EClientState::ACCESS );
     m_players[socket].EndLock();
     m_playersLock.unlock();
 
-    HANDLE returnValue2 = CreateIoCompletionPort(reinterpret_cast<HANDLE>(socket), m_iocpHandle, socket, 0);
-    if (returnValue2 == NULL) {
-        DisplayError("CreateIoCompletionPort AddNewClient()");
+    HANDLE returnValue2 = CreateIoCompletionPort( reinterpret_cast< HANDLE >( socket ), m_iocpHandle, socket, 0 );
+    if ( returnValue2 == NULL ) 
+    {
+        DisplayError( "CreateIoCompletionPort AddNewClient()" );
         return false;
     }
 
     /// 로그인 요청 메시지 전송
     m_playersLock.lock();
-    m_players[socket].SendPacket(RenderMessageMacro::ACCESSMESSAGE);
-    m_players[socket].SendPacket(RenderMessageMacro::LOGONREQUEST);
-    m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+    m_players[socket].SendPacket( RenderMessageMacro::ACCESSMESSAGE );
+    m_players[socket].SendPacket( RenderMessageMacro::LOGONREQUEST );
+    m_players[socket].SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
     m_playersLock.unlock();
 
     return true;
 }
 
-bool BaseServer::StateWorkBranch(const SOCKET& socket, const std::string_view& command)
+bool BaseServer::StateWorkBranch( const SOCKET& socket, const std::string_view& command )
 {
     m_playersLock.lock();
     m_players[socket].StartLock();
     switch (m_players[socket].GetState())
     {
-    case ClientState::ACCESS:
+    case EClientState::ACCESS:
     {
         m_players[socket].EndLock();
 
@@ -272,18 +289,18 @@ bool BaseServer::StateWorkBranch(const SOCKET& socket, const std::string_view& c
             m_players[socket].ClearChattingBuffer();
             m_players[socket].EndLock();
 
-            m_players[socket].SendPacket(RenderMessageMacro::LOGONREQUEST);
-            m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+            m_players[socket].SendPacket( RenderMessageMacro::LOGONREQUEST );
+            m_players[socket].SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
             m_players[socket].ReceivePacket();
             m_playersLock.unlock();
             break;
         }
         m_playersLock.unlock();
 
-        std::string_view checkCommand = { command.cbegin(), command.cbegin() + sizeof(CommandMessage::LOGON) - 1 };
-        if (checkCommand == CommandMessage::LOGON)
+        std::string_view checkCommand = { command.cbegin(), command.cbegin() + sizeof( CommandMessage::LOGON ) - 1 };
+        if ( checkCommand == CommandMessage::LOGON || checkCommand == CommandMessage::LOGON_S)
         {
-            m_logOn.push(socket);
+            m_logOn.push( socket );
         }
         else
         {
@@ -291,38 +308,37 @@ bool BaseServer::StateWorkBranch(const SOCKET& socket, const std::string_view& c
             m_players[socket].StartLock();
             m_players[socket].ClearChattingBuffer();
             m_players[socket].EndLock();
-            m_players[socket].SendPacket(RenderMessageMacro::LOGONREQUEST);
-            m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+            m_players[socket].SendPacket( RenderMessageMacro::LOGONREQUEST );
+            m_players[socket].SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
             m_players[socket].ReceivePacket();
             m_playersLock.unlock();
-
         }
     }
     break;
-    case ClientState::LOGON:
+    case EClientState::LOGON:
     {
         m_players[socket].EndLock();
         m_playersLock.unlock();
-        CommandWorkBranch(socket, command);
+        CommandWorkBranch( socket, command );
     }
     break;
-    case ClientState::ROOM:
+    case EClientState::ROOM:
     {
         m_players[socket].EndLock();
         m_playersLock.unlock();
 
-        Chatting(socket);
+        Chatting( socket );
         m_playersLock.lock();
         m_players[socket].StartLock();
         m_players[socket].ClearChattingBuffer();
         m_players[socket].EndLock();
 
         m_players[socket].ReceivePacket();
-        m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+        m_players[socket].SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
         m_playersLock.unlock();
     }
     break;
-    case ClientState::END:
+    case EClientState::END:
     {
         m_players[socket].ClearChattingBuffer();
         m_players[socket].EndLock();
@@ -343,52 +359,51 @@ bool BaseServer::StateWorkBranch(const SOCKET& socket, const std::string_view& c
     return true;
 }
 
-bool BaseServer::CommandWorkBranch(const SOCKET& socket, const std::string_view& request)
+bool BaseServer::CommandWorkBranch( const SOCKET& socket, const std::string_view& request )
 {
-    if (request.empty())
+    m_playersLock.lock();
+    auto& player = m_players[socket];
+    m_playersLock.unlock();
+
+
+    if ( request.empty() )
     {
-        m_playersLock.lock();
-        m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
-        m_players[socket].ReceivePacket();
-        m_playersLock.unlock();
+        player.SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
+        player.ReceivePacket();
         return false;
     }
 
     bool flag = true;
-    if (request.length() == 1)
+    if ( request.length() == 1 )
     {
         std::string_view checkCommand1Word = { request.cbegin(), request.cbegin() + 1 };
         
-        auto iterator = m_commandFunctions.find(checkCommand1Word);
-        if (iterator == m_commandFunctions.end())
+        auto iterator = m_commandFunctions.find( checkCommand1Word );
+        if ( iterator == m_commandFunctions.end() )
         {
-            m_playersLock.lock();
-            m_players[socket].StartLock();
-            m_players[socket].ClearChattingBuffer();
-            m_players[socket].EndLock();
-            m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
-            m_players[socket].ReceivePacket();
-            m_playersLock.unlock();
+            player.StartLock();
+            player.ClearChattingBuffer();
+            player.EndLock();
+            player.SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
+            player.ReceivePacket();
             flag = false;
         }
         else
         {
-            if (flag == true)
+            if ( flag == true )
             {
-                m_commandFunctions[checkCommand1Word](socket);
-                m_playersLock.lock();
-                m_players[socket].StartLock();
-                m_players[socket].ClearChattingBuffer();
-                m_players[socket].EndLock();
-                m_playersLock.unlock();
+                m_commandFunctions[checkCommand1Word]( socket );
+                player.StartLock();
+                player.ClearChattingBuffer();
+                player.EndLock();
             }
             return true;
         }
     }
-    else if (request.length() >= 2) 
+    else if ( request.length() >= 2 ) 
     {
         std::string_view checkCommand2Word = "";
-        if (request[1] == ' ')
+        if ( request[1] == ' ' )
         {
             checkCommand2Word = { request.cbegin(), request.cbegin() + 1 };
         }
@@ -396,54 +411,50 @@ bool BaseServer::CommandWorkBranch(const SOCKET& socket, const std::string_view&
         {
             checkCommand2Word = { request.cbegin(), request.cbegin() + 2 };
         }
-        auto iterator = m_commandFunctions.find(checkCommand2Word);
-        if (iterator == m_commandFunctions.end())
+        auto iterator = m_commandFunctions.find( checkCommand2Word );
+        if ( iterator == m_commandFunctions.end() )
         {
-            m_playersLock.lock();
-            m_players[socket].StartLock();
-            m_players[socket].ClearChattingBuffer();
-            m_players[socket].EndLock();
-            m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
-            m_players[socket].ReceivePacket();
-            m_playersLock.unlock();
+            player.StartLock();
+            player.ClearChattingBuffer();
+            player.EndLock();
+            player.SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
+            player.ReceivePacket();
             flag = false;
         }
-        if (flag == true)
+        if ( flag == true )
         {
-            m_commandFunctions[checkCommand2Word](socket);
-            m_playersLock.lock();
-            m_players[socket].StartLock();
-            m_players[socket].ClearChattingBuffer();
-            m_players[socket].EndLock();
-            m_playersLock.unlock();
+            m_commandFunctions[checkCommand2Word]( socket );
+            player.StartLock();
+            player.ClearChattingBuffer();
+            player.EndLock();
         }
         return true;
     }
     return false;
 }
 
-bool BaseServer::ReqeustCommandList(const SOCKET& socket)
+bool BaseServer::ReqeustCommandList( const SOCKET& socket )
 {
     m_playersLock.lock();
     auto& player = m_players[socket];
     m_playersLock.unlock();
 
-    player.SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE);
-    player.SendPacket(RenderMessageMacro::GUIDEMESSAGE);
-    player.SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE);
-    player.SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE);
-    player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+    player.SendPacket( RenderMessageMacro::DIVIDELINEMESSAGE );
+    player.SendPacket( RenderMessageMacro::GUIDEMESSAGE );
+    player.SendPacket( RenderMessageMacro::DIVIDELINEMESSAGE );
+    player.SendPacket( RenderMessageMacro::SELECTCOMMANDMESSAGE );
+    player.SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
     player.ReceivePacket();
 
     return true;
 }
 
-bool BaseServer::RequestExit(const SOCKET& socket)
+bool BaseServer::RequestExit( const SOCKET& socket )
 {
     return Disconnect(socket);
 }
 
-bool BaseServer::RequestUserInfo(const SOCKET& socket)
+bool BaseServer::RequestUserInfo( const SOCKET& socket )
 {
     m_playersLock.lock();
     auto& player = m_players[socket];
@@ -465,11 +476,11 @@ bool BaseServer::RequestUserInfo(const SOCKET& socket)
     SOCKET userSocket;
 
     m_playersLock.lock();
-    for (const auto& user : m_players)
+    for ( const auto& user : m_players )
     {
-        if (user.second.GetState() > ClientState::ACCESS && user.second.GetState() < ClientState::EXIT)
+        if ( user.second.GetState() > EClientState::ACCESS && user.second.GetState() < EClientState::EXIT )
         {
-            if (userName == user.second.GetName())
+            if ( userName == user.second.GetName() )
             {
                 userSocket = user.first;
                 flag = true;
@@ -479,7 +490,7 @@ bool BaseServer::RequestUserInfo(const SOCKET& socket)
     }
     m_playersLock.unlock();
 
-    if (flag == true)
+    if ( flag == true )
     {
         m_playersLock.lock();
         auto& target = m_players[userSocket];
@@ -487,21 +498,21 @@ bool BaseServer::RequestUserInfo(const SOCKET& socket)
 
         std::string userInfo = { userName.cbegin(), userName.cend()};
 
-        switch (target.GetState())
+        switch ( target.GetState() )
         {
-        case ClientState::ACCESS:
+        case EClientState::ACCESS:
         {
         }
         break;
-        case ClientState::LOGON:
+        case EClientState::LOGON:
         {
             userInfo += "님은 로비에 있습니다.\n\r";
-            player.SendPacket(userInfo.c_str());
-            player.SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE);
-            player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+            player.SendPacket( userInfo.c_str());
+            player.SendPacket( RenderMessageMacro::SELECTCOMMANDMESSAGE );
+            player.SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
         }
         break;
-        case ClientState::ROOM:
+        case EClientState::ROOM:
         {
             userInfo += "님은";
 
@@ -510,20 +521,20 @@ bool BaseServer::RequestUserInfo(const SOCKET& socket)
             target.EndLock();
 
             char roomIndex[8];
-            _itoa_s(roomNumber, roomIndex, 10);
+            _itoa_s( roomNumber, roomIndex, 10 );
             userInfo += roomIndex;
             userInfo += "번 방에 있습니다.\n\r";
 
-            player.SendPacket(userInfo.c_str());
-            player.SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE);
-            player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+            player.SendPacket( userInfo.c_str() );
+            player.SendPacket( RenderMessageMacro::SELECTCOMMANDMESSAGE );
+            player.SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
         }
         break;
-        case ClientState::EXIT:
+        case EClientState::EXIT:
         {
         }
         break;
-        case ClientState::END:
+        case EClientState::END:
         {
         }
         break;
@@ -533,16 +544,16 @@ bool BaseServer::RequestUserInfo(const SOCKET& socket)
     }
     else
     {
-        m_players[socket].SendPacket(RenderMessageMacro::USERINFOMESSAGEFAILED);
-        player.SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE);
-        m_players[socket].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+        m_players[socket].SendPacket( RenderMessageMacro::USERINFOMESSAGEFAILED );
+        player.SendPacket( RenderMessageMacro::SELECTCOMMANDMESSAGE );
+        m_players[socket].SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
     }
     m_players[socket].ReceivePacket();
 
     return true;
 }
 
-bool BaseServer::RequestUserList(const SOCKET& socket)
+bool BaseServer::RequestUserList( const SOCKET& socket )
 {
     m_playersLock.lock();
     auto& player = m_players[socket];
@@ -550,7 +561,7 @@ bool BaseServer::RequestUserList(const SOCKET& socket)
 
     std::string_view message = { player.GetChattingLog().cbegin(), player.GetChattingLog().cend() };
 
-    if (message.length() > 2)
+    if ( message.length() > 2 )
     {
         player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
         player.ReceivePacket();
@@ -559,9 +570,9 @@ bool BaseServer::RequestUserList(const SOCKET& socket)
 
     std::string userNameList = "--------------------------------유저 목록--------------------------------\n\r";
     m_playersLock.lock();
-    for (const auto& p : m_players)
+    for ( const auto& p : m_players )
     {
-        if ( p.second.GetState() > ClientState::ACCESS && p.second.GetState() < ClientState::EXIT )
+        if ( p.second.GetState() > EClientState::ACCESS && p.second.GetState() < EClientState::EXIT )
         {
             userNameList += p.second.GetName();
             userNameList += "\n\r";
@@ -569,15 +580,15 @@ bool BaseServer::RequestUserList(const SOCKET& socket)
     }
     m_playersLock.unlock();
 
-    player.SendPacket(userNameList.c_str());
-    player.SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE);
-    player.SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE);
-    player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+    player.SendPacket( userNameList.c_str() );
+    player.SendPacket( RenderMessageMacro::DIVIDELINEMESSAGE );
+    player.SendPacket( RenderMessageMacro::SELECTCOMMANDMESSAGE );
+    player.SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
     player.ReceivePacket();
     return true;
 }
 
-bool BaseServer::RequestRoomInfo(const SOCKET& socket)
+bool BaseServer::RequestRoomInfo( const SOCKET& socket )
 {
     m_playersLock.lock();
     auto& player = m_players[socket];
@@ -585,9 +596,9 @@ bool BaseServer::RequestRoomInfo(const SOCKET& socket)
 
     std::string_view message = { player.GetChattingLog().cbegin(), player.GetChattingLog().cend() };
 
-    if (message[2] != ' ')
+    if ( message[2] != ' ' )
     {
-        player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+        player.SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
         player.ReceivePacket();
         return false;
     }
@@ -600,17 +611,17 @@ bool BaseServer::RequestRoomInfo(const SOCKET& socket)
     ///입장 시간 기입
     std::string roomInTime = "";
     char timebuffer[64];
-    time_t currentTime = time(NULL);
+    time_t currentTime = time( NULL );
     tm currentTm;
-    localtime_s(&currentTm, &currentTime);
+    localtime_s( &currentTm, &currentTime );
 
-    strftime(timebuffer, sizeof(timebuffer), "%m-%d-%Y %X", &currentTm);
+    strftime( timebuffer, sizeof( timebuffer ), "%m-%d-%Y %X", &currentTm );
     roomInTime = timebuffer;
 
     m_chattRoomLock.lock();
-    for (const auto& room : m_chattingRooms)
+    for ( const auto& room : m_chattingRooms )
     {
-        if (index == room.first)
+        if ( index == room.first )
         {
             ///방 정보 메시지 보내기
             char roomTotal[8];
@@ -647,12 +658,12 @@ bool BaseServer::RequestRoomInfo(const SOCKET& socket)
         }
     }
     m_chattRoomLock.unlock();
-    player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+    player.SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
     player.ReceivePacket();
     return true;
 }
 
-bool BaseServer::RequestNote(const SOCKET& socket)
+bool BaseServer::RequestNote( const SOCKET& socket )
 {
     m_playersLock.lock();
     auto& player = m_players[socket];
@@ -662,9 +673,9 @@ bool BaseServer::RequestNote(const SOCKET& socket)
 
     if (message.length() <= 2)
     {
-        player.SendPacket(RenderMessageMacro::FAILEDCOMMANDMESSAGE);
-        player.SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE);
-        player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+        player.SendPacket( RenderMessageMacro::FAILEDCOMMANDMESSAGE );
+        player.SendPacket( RenderMessageMacro::SELECTCOMMANDMESSAGE );
+        player.SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
         player.ReceivePacket();
         return false;
     }
@@ -672,9 +683,9 @@ bool BaseServer::RequestNote(const SOCKET& socket)
     std::string name;
     std::string note;
     bool flag = true;
-    for (int i = 3; i < message.length(); ++i)
+    for ( int i = 3; i < message.length(); ++i )
     {
-        if (message[i] == ' ')
+        if ( message[i] == ' ' )
         {
             flag = false;
         }
@@ -696,9 +707,9 @@ bool BaseServer::RequestNote(const SOCKET& socket)
     {
         m_playersLock.lock();
         
-        for ( auto& p : m_players)
+        for ( auto& p : m_players )
         {
-            if (name == p.second.GetName())
+            if ( name == p.second.GetName() )
             {
                 targetPlayerInfo = &( p.second );
                 isExistPlayer = true;
@@ -708,7 +719,7 @@ bool BaseServer::RequestNote(const SOCKET& socket)
         m_playersLock.unlock();
     }
     
-    if (isExistPlayer == false)
+    if ( isExistPlayer == false )
     {
         player.SendPacket("존재하지 않는 유저입니다.\n\r");
         player.SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE);
@@ -716,7 +727,7 @@ bool BaseServer::RequestNote(const SOCKET& socket)
     }
     else
     {
-        if (name == player.GetName())
+        if ( name == player.GetName() )
         {
             player.SendPacket("본인에게는 귓속말을 할 수 없습니다.\n\r");
             player.SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE);
@@ -727,8 +738,8 @@ bool BaseServer::RequestNote(const SOCKET& socket)
             name += "==>";
             name += note;
             name += "\n\r";
-            targetPlayerInfo->SendPacket(name.c_str());
-            player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+            targetPlayerInfo->SendPacket( name.c_str() );
+            player.SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
         }
 
     }
@@ -738,7 +749,7 @@ bool BaseServer::RequestNote(const SOCKET& socket)
     return false;
 }
 
-bool BaseServer::RequestRoomCreate(const SOCKET& socket)
+bool BaseServer::RequestRoomCreate( const SOCKET& socket )
 {
     ///o 최대인원 방이름
     m_playersLock.lock();
@@ -747,11 +758,11 @@ bool BaseServer::RequestRoomCreate(const SOCKET& socket)
     std::string_view message = { player.GetChattingLog().cbegin(), player.GetChattingLog().cend() };
 
     ///[예외처리] 양식에 맞지 않음
-    if (message.length() <= 4)
+    if ( message.length() <= 4 )
     {
-        player.SendPacket(RenderMessageMacro::FAILEDCOMMANDMESSAGE);
-        player.SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE);
-        player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+        player.SendPacket( RenderMessageMacro::FAILEDCOMMANDMESSAGE );
+        player.SendPacket( RenderMessageMacro::SELECTCOMMANDMESSAGE );
+        player.SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
         player.ReceivePacket();
         return false;
     }
@@ -759,9 +770,9 @@ bool BaseServer::RequestRoomCreate(const SOCKET& socket)
     std::string max = "";
     std::string roomName = "";
     bool flag = false;
-    for (int i = 2; i < message.length(); ++i)
+    for ( int i = 2; i < message.length(); ++i )
     {
-        if (message[i] == ' ')
+        if ( message[i] == ' ' )
         {
             flag = true;
         }
@@ -790,7 +801,7 @@ bool BaseServer::RequestRoomCreate(const SOCKET& socket)
     int maxUser = atoi(max.c_str());
 
     /// 인원 초과
-    if (maxUser < InitializeRoom::MIN_ROOMPLAYER || maxUser > InitializeRoom::MAX_ROOMPLAYER)
+    if ( maxUser < InitializeRoom::MIN_ROOMPLAYER || maxUser > InitializeRoom::MAX_ROOMPLAYER )
     {
         player.SendPacket(RenderMessageMacro::CREATEROOMFAILEDOVERUSERS);
         player.SendPacket(RenderMessageMacro::FAILEDCOMMANDMESSAGE);
@@ -815,26 +826,26 @@ bool BaseServer::RequestRoomCreate(const SOCKET& socket)
     char timebuffer[64];
     time_t currentTime = time(NULL);
     tm currentTm;
-    localtime_s(&currentTm, &currentTime);
+    localtime_s( &currentTm, &currentTime );
 
-    strftime(timebuffer, sizeof(timebuffer), "%m-%d-%Y %X", &currentTm);
+    strftime( timebuffer, sizeof( timebuffer ), "%m-%d-%Y %X", &currentTm );
     roomInTime = timebuffer;
 
     room.StartLock();
-    room.SetIndex(number);
-    room.SetMaxUser(maxUser);
-    room.SetName(roomName.c_str());
-    room.SetTotalPlayers(1);
-    room.PushAccessor(socket);
+    room.SetIndex( number );
+    room.SetMaxUser( maxUser );
+    room.SetName( roomName.c_str() );
+    room.SetTotalPlayers( 1 );
+    room.PushAccessor( socket );
     room.EndLock();
-    room.SetRoomInTime(roomInTime);
+    room.SetRoomInTime( roomInTime );
     
     std::cout <<"["<< number <<"] [" << roomName << "] 생성" << std::endl;
 
     player.StartLock();
-    player.SetState(ClientState::ROOM);
-    player.SetRoomNumber(number);
-    player.SetRoomInTime(roomInTime);
+    player.SetState( EClientState::ROOM );
+    player.SetRoomNumber( number );
+    player.SetRoomInTime( roomInTime );
     player.EndLock();
 
     std::string enterMessage = "** ";
@@ -843,15 +854,15 @@ bool BaseServer::RequestRoomCreate(const SOCKET& socket)
     enterMessage += m_players[socket].GetChattingLog()[2]; 
     enterMessage += ")\n\r";
 
-    player.SendPacket(RenderMessageMacro::CREATEROOMSUCCESSMESSAGE);
-    player.SendPacket(enterMessage.c_str());
-    player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+    player.SendPacket( RenderMessageMacro::CREATEROOMSUCCESSMESSAGE );
+    player.SendPacket( enterMessage.c_str() );
+    player.SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
     player.ReceivePacket();
 
     return true;
 }
 
-bool BaseServer::RequestRoomEnter(const SOCKET& socket)
+bool BaseServer::RequestRoomEnter( const SOCKET& socket )
 {
     m_playersLock.lock();
     auto& player = m_players[socket];;
@@ -862,25 +873,25 @@ bool BaseServer::RequestRoomEnter(const SOCKET& socket)
 
     if (message[1] != ' ')
     {
-        player.SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE);
-        player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+        player.SendPacket( RenderMessageMacro::SELECTCOMMANDMESSAGE );
+        player.SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
         player.ReceivePacket();
         return false;
     }
 
     std::string roomNumberMessage = { message.cbegin() + 2, message.cend() };
 
-    int roomNumber =  atoi(roomNumberMessage.c_str());
+    int roomNumber =  atoi( roomNumberMessage.c_str() );
     m_chattRoomLock.lock();
-    auto iter = m_chattingRooms.find(roomNumber);
+    auto iter = m_chattingRooms.find( roomNumber );
     auto enditer = m_chattingRooms.end();
     m_chattRoomLock.unlock();
 
     if (iter == enditer)
     {
-        player.SendPacket(RenderMessageMacro::ROOMENTERFAILEDMESSAGE);
-        player.SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE);
-        player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+        player.SendPacket( RenderMessageMacro::ROOMENTERFAILEDMESSAGE );
+        player.SendPacket( RenderMessageMacro::SELECTCOMMANDMESSAGE );
+        player.SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
         player.ReceivePacket();
         return false;
     }
@@ -898,40 +909,40 @@ bool BaseServer::RequestRoomEnter(const SOCKET& socket)
     ///최대 인원 제한
     if (total == max)
     {
-        player.SendPacket(RenderMessageMacro::ROOMENTERFULLMESSAGE);
-        player.SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE);
-        player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+        player.SendPacket( RenderMessageMacro::ROOMENTERFULLMESSAGE );
+        player.SendPacket( RenderMessageMacro::SELECTCOMMANDMESSAGE );
+        player.SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
         player.ReceivePacket();
         return false;
     }
 
     room.StartLock();
-    room.PushAccessor(socket);
-    std::vector<SOCKET> roomUserIndex = room.GetAccessorIndex();
-    room.SetTotalPlayers(++total);
+    room.PushAccessor( socket );
+    std::vector< SOCKET > roomUserIndex = room.GetAccessorIndex();
+    room.SetTotalPlayers( ++total );
     room.EndLock();
 
     ///입장 시간 기입
     std::string roomInTime = "";
     ///현재 시간
     char timebuffer[64];
-    time_t currentTime = time(NULL);
+    time_t currentTime = time( NULL );
     tm currentTm;
-    localtime_s(&currentTm, &currentTime);
+    localtime_s( &currentTm, &currentTime );
 
-    strftime(timebuffer, sizeof(timebuffer), "%m-%d-%Y %X", &currentTm);
+    strftime( timebuffer, sizeof( timebuffer ), "%m-%d-%Y %X", &currentTm );
     roomInTime = timebuffer;
 
     player.StartLock();
-    player.SetState(ClientState::ROOM);
-    player.SetRoomNumber(roomNumber);
-    player.SetRoomInTime(roomInTime);
+    player.SetState( EClientState::ROOM );
+    player.SetRoomNumber( roomNumber );
+    player.SetRoomInTime( roomInTime );
     player.EndLock();
     
     char totalcount[8];
     char maxcount[8];
-    _itoa_s(total, totalcount, 10);
-    _itoa_s(max, maxcount, 10);
+    _itoa_s( total, totalcount, 10 );
+    _itoa_s( max, maxcount, 10 );
 
     std::string enterMessage = "\n\r** ";
     enterMessage +=  userName;
@@ -942,10 +953,10 @@ bool BaseServer::RequestRoomEnter(const SOCKET& socket)
     enterMessage += ")\n\r";    
 
     m_playersLock.lock();
-    for (const auto& user : roomUserIndex)
+    for ( const auto& user : roomUserIndex )
     {
-        m_players[user].SendPacket(enterMessage.c_str());
-        m_players[user].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+        m_players[user].SendPacket( enterMessage.c_str() );
+        m_players[user].SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
     }
     m_playersLock.unlock();
     player.ReceivePacket();
@@ -953,17 +964,17 @@ bool BaseServer::RequestRoomEnter(const SOCKET& socket)
     return true;
 }
 
-bool BaseServer::RequestRoomList(const SOCKET& socket)
+bool BaseServer::RequestRoomList( const SOCKET& socket )
 {
     m_playersLock.lock();
     auto& player = m_players[socket];
     m_playersLock.unlock();
     std::string message = { player.GetChattingLog().cbegin(), player.GetChattingLog().cend() };
 
-    if (message != CommandMessage::ROOMLIST)
+    if ( message != CommandMessage::ROOMLIST )
     {
-        player.SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE);
-        player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+        player.SendPacket( RenderMessageMacro::SELECTCOMMANDMESSAGE );
+        player.SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
         player.ReceivePacket();
         return false;
     }
@@ -972,11 +983,11 @@ bool BaseServer::RequestRoomList(const SOCKET& socket)
     size_t roomSize = m_chattingRooms.size();
     m_chattRoomLock.unlock();
 
-    if (roomSize == 0)
+    if ( roomSize == 0 )
     {
         /// 방이 없음.
-        player.SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE);
-        player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+        player.SendPacket( RenderMessageMacro::SELECTCOMMANDMESSAGE );
+        player.SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
         player.ReceivePacket();
         return true;
     }
@@ -986,12 +997,12 @@ bool BaseServer::RequestRoomList(const SOCKET& socket)
     char totalPlayer[8];
     char maxPlayer[8];
     m_chattRoomLock.lock();
-    for (auto& room : m_chattingRooms)
+    for ( auto& room : m_chattingRooms )
     {
-        _itoa_s(room.first, roomNumber, 10);
+        _itoa_s( room.first, roomNumber, 10 );
         room.second.StartLock();
-        _itoa_s(room.second.GetTotalPlayer(), totalPlayer, 10);
-        _itoa_s(room.second.GetMaxUser(), maxPlayer, 10);
+        _itoa_s( room.second.GetTotalPlayer(), totalPlayer, 10 );
+        _itoa_s( room.second.GetMaxUser(), maxPlayer, 10 );
         const char* name = room.second.GetName();
         room.second.EndLock();
 
@@ -1008,11 +1019,11 @@ bool BaseServer::RequestRoomList(const SOCKET& socket)
     }
     m_chattRoomLock.unlock();
 
-    player.SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE);
-    player.SendPacket(roomsInfo.c_str());
-    player.SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE);
-    player.SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE);
-    player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+    player.SendPacket( RenderMessageMacro::DIVIDELINEMESSAGE );
+    player.SendPacket( roomsInfo.c_str() );
+    player.SendPacket( RenderMessageMacro::DIVIDELINEMESSAGE );
+    player.SendPacket( RenderMessageMacro::SELECTCOMMANDMESSAGE );
+    player.SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
     player.ReceivePacket();
 
     return true;
@@ -1022,14 +1033,14 @@ void BaseServer::LogOnCommandProcess()
 {
     using namespace std::chrono_literals;
 
-    while (true)
+    while ( true )
     {
         m_logOnLock.lock();
-        if (m_logOn.empty() == true)
+        if ( m_logOn.empty() == true )
         {
             m_logOnLock.unlock();
             /// 로그인 하려는 유저가 있을 때 마다만 동작. 2000ms 한번 씩 로그인 유저 존재 검사
-            std::this_thread::sleep_for(1500ms);
+            std::this_thread::sleep_for( 1500ms );
         }
 
         else
@@ -1066,17 +1077,17 @@ void BaseServer::LogOnCommandProcess()
             {
                 player.StartLock();
                 player.ClearChattingBuffer();
-                player.SetName(name.c_str());
-                player.SetState(ClientState::LOGON);
+                player.SetName( name.c_str() );
+                player.SetState( EClientState::LOGON );
                 player.EndLock();
                 std::cout << name.c_str() << "[" << socket << "] LogOn" << std::endl;
 
                 ///클라이언트에 로그인 성공 문구 출력
-                player.SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE);
-                player.SendPacket(RenderMessageMacro::SUCCESSLOGONMESSAGE);
-                player.SendPacket(RenderMessageMacro::DIVIDELINEMESSAGE);
-                player.SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE);
-                player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+                player.SendPacket( RenderMessageMacro::DIVIDELINEMESSAGE );
+                player.SendPacket( RenderMessageMacro::SUCCESSLOGONMESSAGE );
+                player.SendPacket( RenderMessageMacro::DIVIDELINEMESSAGE );
+                player.SendPacket( RenderMessageMacro::SELECTCOMMANDMESSAGE );
+                player.SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
                 player.ReceivePacket();
             }
 
@@ -1087,15 +1098,15 @@ void BaseServer::LogOnCommandProcess()
                 player.EndLock();
 
                 ///클라이언트에 로그인 실패 문구 출력
-                player.SendPacket(RenderMessageMacro::LOGONFAILED);
-                player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+                player.SendPacket( RenderMessageMacro::LOGONFAILED );
+                player.SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
                 player.ReceivePacket();
             }
         }
     }
 }
 
-bool BaseServer::Chatting(const SOCKET& socket)
+bool BaseServer::Chatting( const SOCKET& socket )
 {
     std::string userMessage = "[";
     m_playersLock.lock();
@@ -1116,18 +1127,18 @@ bool BaseServer::Chatting(const SOCKET& socket)
     m_chattRoomLock.unlock();
 
     room.StartLock();
-    const std::vector<SOCKET> playersIndex = room.GetAccessorIndex();
+    const std::vector< SOCKET > playersIndex = room.GetAccessorIndex();
     room.EndLock();
 
-    for (int i = 0; i < playersIndex.size(); ++i)
+    for ( int i = 0; i < playersIndex.size(); ++i )
     {
-        if (playersIndex[i] == socket)
+        if ( playersIndex[i] == socket )
         {
             continue;
         }
         m_playersLock.lock();
-        m_players[playersIndex[i]].SendPacket(userMessage.c_str());
-        m_players[playersIndex[i]].SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
+        m_players[playersIndex[i]].SendPacket( userMessage.c_str() );
+        m_players[playersIndex[i]].SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
         m_playersLock.unlock();
     }
 
@@ -1135,7 +1146,7 @@ bool BaseServer::Chatting(const SOCKET& socket)
     return false;
 }
 
-bool BaseServer::ReassemblePacket(char* packet, const DWORD& bytes, const SOCKET& socket)
+bool BaseServer::ReassemblePacket( char* packet, const DWORD& bytes, const SOCKET& socket )
 {
     if (packet == nullptr || bytes == 0)
         return false;
@@ -1149,14 +1160,14 @@ bool BaseServer::ReassemblePacket(char* packet, const DWORD& bytes, const SOCKET
     {
         if (packet[i] == '\r\n' || packet[i] == '\n' || packet[i] == '\r')
         {
-            StateWorkBranch(socket, player.GetChattingLog());
+            StateWorkBranch( socket, player.GetChattingLog() );
             flag = true;
             break;
         }
         else
         {
             player.StartLock();
-            player.PushChattingBuffer(packet[i]);
+            player.PushChattingBuffer( packet[i] );
             player.EndLock();
         }
     }
@@ -1167,7 +1178,7 @@ bool BaseServer::ReassemblePacket(char* packet, const DWORD& bytes, const SOCKET
     return true;
 }
 
-bool BaseServer::Disconnect(SOCKET socket)
+bool BaseServer::Disconnect( SOCKET socket )
 {
     m_playersLock.lock();
     auto& player = m_players[socket];
@@ -1177,7 +1188,7 @@ bool BaseServer::Disconnect(SOCKET socket)
     const std::string name = player.GetName();
     player.EndLock();
 
-    if (player.GetState() == ClientState::ROOM)
+    if (player.GetState() == EClientState::ROOM)
     {
         m_chattRoomLock.lock();
         auto& room = m_chattingRooms[player.GetRoomNumber()];
@@ -1191,20 +1202,20 @@ bool BaseServer::Disconnect(SOCKET socket)
         {
             ///사용하지 않게된 인덱스 회수
             m_chattRoomNumLock.lock();
-            m_charRoomNumber.push(room.GetIndex());
+            m_charRoomNumber.push( room.GetIndex() );
             m_chattRoomNumLock.unlock();
 
             ///방폭파
             m_chattRoomLock.lock();
-            m_chattingRooms.erase(room.GetIndex());
+            m_chattingRooms.erase( room.GetIndex() );
             m_chattRoomLock.unlock();
         }
         else
         {
             room.StartLock();
-            room.SetTotalPlayers(--total);
-            room.PopAccessor(socket);
-            const std::vector<SOCKET> remainUser = room.GetAccessorIndex();
+            room.SetTotalPlayers( --total );
+            room.PopAccessor( socket );
+            const std::vector< SOCKET > remainUser = room.GetAccessorIndex();
             room.EndLock();
 
             room.StartLock();
@@ -1214,8 +1225,8 @@ bool BaseServer::Disconnect(SOCKET socket)
             char totalUserString[8];
             char maxUserString[8];
 
-            _itoa_s(max, maxUserString, 10);
-            _itoa_s(total, totalUserString, 10);
+            _itoa_s( max, maxUserString, 10 );
+            _itoa_s( total, totalUserString, 10 );
 
             /// 퇴장 메시지 출력
             std::string message = "** [";
@@ -1227,9 +1238,9 @@ bool BaseServer::Disconnect(SOCKET socket)
             message += ")\n\r";
 
             m_playersLock.lock();
-            for (const auto& user : remainUser)
+            for ( const auto& user : remainUser )
             {
-                m_players[user].SendPacket(message);
+                m_players[user].SendPacket( message );
             }
             m_playersLock.unlock();
         }
@@ -1245,13 +1256,13 @@ bool BaseServer::Disconnect(SOCKET socket)
     return true;
 }
 
-void BaseServer::DisplayError(const char* msg)
+void BaseServer::DisplayError( const char* msg )
 {
     void* messageBuffer;
-    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+    FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
         NULL, WSAGetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        (LPTSTR)&messageBuffer, 0, NULL);
+        (LPTSTR)&messageBuffer, 0, NULL );
     std::cout << msg;
     std::wcout << L" 에러 " << messageBuffer << std::endl;
-    LocalFree(messageBuffer);
+    LocalFree( messageBuffer );
 }
