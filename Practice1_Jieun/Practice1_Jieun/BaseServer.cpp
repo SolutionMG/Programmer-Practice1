@@ -851,7 +851,7 @@ bool BaseServer::RequestRoomCreate( const SOCKET& socket )
     std::string enterMessage = "** ";
     enterMessage += m_players[socket].GetName();
     enterMessage += "님이 들어오셨습니다. (현재인원: 1/";
-    enterMessage += m_players[socket].GetChattingLog()[2]; 
+    enterMessage += max;
     enterMessage += ")\n\r";
 
     player.SendPacket( RenderMessageMacro::CREATEROOMSUCCESSMESSAGE );
