@@ -790,9 +790,10 @@ bool BaseServer::RequestRoomCreate(const SOCKET& socket)
     int maxUser = atoi(max.c_str());
 
     /// 인원 초과
-    if (maxUser < 2 || maxUser > 20)
+    if (maxUser < InitializeRoom::MIN_ROOMPLAYER || maxUser > InitializeRoom::MAX_ROOMPLAYER)
     {
         player.SendPacket(RenderMessageMacro::CREATEROOMFAILEDOVERUSERS);
+        player.SendPacket(RenderMessageMacro::FAILEDCOMMANDMESSAGE);
         player.SendPacket(RenderMessageMacro::SELECTCOMMANDMESSAGE);
         player.SendPacket(RenderMessageMacro::COMMANDWAITMESSAGE);
         player.ReceivePacket();
@@ -838,7 +839,7 @@ bool BaseServer::RequestRoomCreate(const SOCKET& socket)
 
     std::string enterMessage = "** ";
     enterMessage += m_players[socket].GetName();
-    enterMessage += "님이 들어오셨습니다. (현재인원 1/";
+    enterMessage += "님이 들어오셨습니다. (현재인원: 1/";
     enterMessage += m_players[socket].GetChattingLog()[2]; 
     enterMessage += ")\n\r";
 
@@ -934,7 +935,7 @@ bool BaseServer::RequestRoomEnter(const SOCKET& socket)
 
     std::string enterMessage = "\n\r** ";
     enterMessage +=  userName;
-    enterMessage += "님이 입장하셨습니다.(";
+    enterMessage += "님이 입장하셨습니다. (현재인원: ";
     enterMessage += totalcount;
     enterMessage += " , ";
     enterMessage += maxcount;
@@ -996,12 +997,13 @@ bool BaseServer::RequestRoomList(const SOCKET& socket)
 
         roomsInfo += '[';
         roomsInfo += roomNumber;
-        roomsInfo += "] (";
+        roomsInfo += "] ";
+        roomsInfo += name;
+        roomsInfo += "(현재인원: ";
         roomsInfo += totalPlayer;
         roomsInfo += ",";
         roomsInfo += maxPlayer;
         roomsInfo += ")";
-        roomsInfo += name;
         roomsInfo += "\n\r";
     }
     m_chattRoomLock.unlock();
@@ -1171,13 +1173,20 @@ bool BaseServer::Disconnect(SOCKET socket)
     auto& player = m_players[socket];
     m_playersLock.unlock();
 
+    player.StartLock();
+    const std::string name = player.GetName();
+    player.EndLock();
+
     if (player.GetState() == ClientState::ROOM)
     {
         m_chattRoomLock.lock();
         auto& room = m_chattingRooms[player.GetRoomNumber()];
         m_chattRoomLock.unlock();
 
+        room.StartLock();
         int total = room.GetTotalPlayer();
+        room.EndLock();
+
         if (total == 1)
         {
             ///사용하지 않게된 인덱스 회수
@@ -1192,11 +1201,39 @@ bool BaseServer::Disconnect(SOCKET socket)
         }
         else
         {
+            room.StartLock();
             room.SetTotalPlayers(--total);
+            room.PopAccessor(socket);
+            const std::vector<SOCKET> remainUser = room.GetAccessorIndex();
+            room.EndLock();
+
+            room.StartLock();
+            int max = room.GetMaxUser();
+            room.EndLock();
+
+            char totalUserString[8];
+            char maxUserString[8];
+
+            _itoa_s(max, maxUserString, 10);
+            _itoa_s(total, totalUserString, 10);
+
+            /// 퇴장 메시지 출력
+            std::string message = "** [";
+            message += name;
+            message += "] 님이 나가셨습니다. (현재인원: ";
+            message += totalUserString;
+            message += "/";
+            message += maxUserString;
+            message += ")\n\r";
+
+            m_playersLock.lock();
+            for (const auto& user : remainUser)
+            {
+                m_players[user].SendPacket(message);
+            }
+            m_playersLock.unlock();
         }
     }
-
-    const std::string name = m_players[socket].GetName();
 
     m_playersLock.lock();
     m_players.erase(socket);
