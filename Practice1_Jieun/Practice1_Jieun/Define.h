@@ -84,5 +84,8 @@ namespace CommandMessage
 
 	constexpr char EXIT[] = "X";				//종료 대문자
 	constexpr char EXIT_S[] = "x";				//종료 소문자
+
+	constexpr char ROOMEXIT[] = "/X";			//방 나가기 대문자
+	constexpr char ROOMEXIT_S[] = "/x";			//방 나가기 소문자
 }
 #endif // !DEFINE_H
