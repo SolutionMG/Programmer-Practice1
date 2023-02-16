@@ -990,6 +990,7 @@ bool BaseServer::RequestRoomList( const SOCKET& socket )
     if ( roomSize == 0 )
     {
         /// 방이 없음.
+        player.SendPacket("방이 존재하지 않습니다.\n\r");
         player.SendPacket( RenderMessageMacro::SELECTCOMMANDMESSAGE );
         player.SendPacket( RenderMessageMacro::COMMANDWAITMESSAGE );
         player.ReceivePacket();
