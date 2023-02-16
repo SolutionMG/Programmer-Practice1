@@ -24,7 +24,7 @@ void ClientInfo::ReceivePacket()
 	m_receiveLock.unlock();
 }
 
-void ClientInfo::SendPacket( const std::string_view& data, unsigned short /* packetSize */ )
+void ClientInfo::SendPacket(const std::string_view& data)
 {
 	/// Overlapped Send ฟไรป
 	WSAOVERLAPPED_EXTEND* over = new WSAOVERLAPPED_EXTEND;
