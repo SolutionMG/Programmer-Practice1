@@ -393,6 +393,10 @@ bool BaseServer::CommandWorkBranch( const SOCKET& socket, const std::string_view
             if ( flag == true )
             {
                 m_commandFunctions[checkCommand1Word]( socket );
+                
+                if (request == "X")
+                    return true;
+
                 player.StartLock();
                 player.ClearChattingBuffer();
                 player.EndLock();
@@ -1160,7 +1164,8 @@ bool BaseServer::ReassemblePacket( char* packet, const DWORD& bytes, const SOCKE
     {
         if (packet[i] == '\r\n' || packet[i] == '\n' || packet[i] == '\r')
         {
-            StateWorkBranch( socket, player.GetChattingLog() );
+            const std::string command = { player.GetChattingLog().cbegin(), player.GetChattingLog().cend()};
+            StateWorkBranch( socket, command);
             flag = true;
             break;
         }
