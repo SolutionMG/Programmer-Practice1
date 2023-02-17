@@ -38,6 +38,7 @@ namespace RenderMessageMacro
 	constexpr char DIVIDELINEMESSAGE[] = "-------------------------------------------------------------------------\n\r";
 	constexpr char COMMANDWAITMESSAGE[] = ">>";
 	constexpr char SELECTCOMMANDMESSAGE[] = "명령어 안내(H) 종료(X)\n\r";
+	constexpr char NOCOMMANDMESSAGE[] = "등록되지 않은 명령어 입니다.H를 누르면 명령어를 확인하실 수 있습니다. \n\r";
 
 	///COMMAND
 	constexpr char GUIDEMESSAGE[] = 

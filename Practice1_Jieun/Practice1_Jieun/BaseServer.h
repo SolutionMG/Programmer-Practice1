@@ -19,7 +19,7 @@ private:
 	std::unordered_map<SOCKET, PlayerInfo> m_players;
 
 	///커맨드 별 함수 관리용 변수
-	std::unordered_map<std::string_view, std::function<void(const SOCKET& socket)>> m_commandFunctions;
+	std::unordered_map<std::string, std::function<bool(const SOCKET& socket)>> m_commandFunctions;
 
 	///채팅방 관리용 변수
 	std::mutex m_chattRoomLock;
@@ -50,28 +50,30 @@ private:
 	bool AddNewClient(const SOCKET& socket);
 
 	///텔넷 클라이언트로부터 받은 패킷 재조립
-	bool ReassemblePacket(char* packet, const DWORD& bytes, const SOCKET& socket);
+	bool ReassemblePacket( char* packet, const DWORD& bytes, const SOCKET& socket );
 	bool Disconnect(SOCKET socket);
 
 	///플레이어 상태에 따른 패킷 명령 수행
-	bool StateWorkBranch(const SOCKET& socket, const std::string_view& command);
+	bool StateWorkBranch( const SOCKET& socket, const std::string& command );
 
 	/// 플레이어의 명령어에 따른 패킷 명령 수행
-	bool CommandWorkBranch(const SOCKET& socket, const std::string_view& request);
+	bool CommandWorkBranch( const SOCKET& socket, const std::string& command );
 
 	/// 플레이어 커맨드 함수들...
+	void AddCommand(const std::string& command, std::function<bool( const SOCKET& socket ) > commandFunction );
+
 	bool InitializeCommandFunction();
 	bool ReqeustCommandList(const SOCKET& socket);
-	bool RequestExit(const SOCKET& socket);
+	bool RequestExit( const SOCKET& socket );
 
-	bool RequestRoomCreate(const SOCKET& socket);
-	bool RequestRoomEnter(const SOCKET& socket);
-	bool RequestRoomList(const SOCKET& socket);
-	bool RequestRoomInfo(const SOCKET& socket);
+	bool RequestRoomCreate( const SOCKET& socket );
+	bool RequestRoomEnter( const SOCKET& socket );
+	bool RequestRoomList( const SOCKET& socket );
+	bool RequestRoomInfo( const SOCKET& socket );
 
-	bool RequestUserList(const SOCKET& socket);
-	bool RequestUserInfo(const SOCKET& socket);
-	bool RequestNote(const SOCKET& socket);
+	bool RequestUserList( const SOCKET& socket);
+	bool RequestUserInfo( const SOCKET& socket);
+	bool RequestNote( const SOCKET& socket);
 
 	/// 로그온 진행 프로세스
 	void LogOnCommandProcess();
