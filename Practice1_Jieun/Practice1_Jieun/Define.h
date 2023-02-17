@@ -55,37 +55,26 @@ namespace RenderMessageMacro
 
 namespace CommandMessage
 {
-	constexpr char LOGON[] = "LOGIN";			//로그인 명령어 대문자
-	constexpr char LOGON_S[] = "login";			//로그인 명령어 소문자
+	constexpr char LOGON[] = "LOGIN";			//로그인 명령어
 
-	constexpr char COMMANDLIST[] = "H";			//명령어 안내 대문자
-	constexpr char COMMANDLIST_S[] = "h";		//명령어 안내 소문자
+	constexpr char COMMANDLIST[] = "H";			//명령어 안내
 
-	constexpr char USERLIST[] = "US";			//이용자 목록 보기 대문자
-	constexpr char USERLIST_S[] = "us";			//이용자 목록 보기 소문자
+	constexpr char USERLIST[] = "US";			//이용자 목록 보기
 
-	constexpr char ROOMLIST[] = "LT";			//대화방 목록 보기 대문자
-	constexpr char ROOMLIST_S[] = "lt";			//대화방 목록 보기 소문자
+	constexpr char ROOMLIST[] = "LT";			//대화방 목록 보기
 
-	constexpr char ROOMINFO[] = "ST";			//방 정보 보기 대문자
-	constexpr char ROOMINFO_S[] = "st";			//방 정보 보기 소문자
+	constexpr char ROOMINFO[] = "ST";			//방 정보 보기
 
-	constexpr char PLAYERINFO[] = "PF";			//이용자 정보 보기 대문자
-	constexpr char PLAYERINFO_S[] = "pf";		//이용자 정보 보기 소문자
+	constexpr char PLAYERINFO[] = "PF";			//이용자 정보 보기 
 
-	constexpr char SECRETMESSAGE[] = "TO";		//귓속말 대문자
-	constexpr char SECRETMESSAGE_S[] = "to";	//귓속말 소문자
+	constexpr char SECRETMESSAGE[] = "TO";		//귓속말
 
-	constexpr char ROOMCREATE[] = "O";			//방생성 대문자
-	constexpr char ROOMCREATE_S[] = "o";		//방생성 소문자
+	constexpr char ROOMCREATE[] = "O";			//방생성
 
-	constexpr char ROOMENTER[] = "J";			//방입장 대문자
-	constexpr char ROOMENTER_S[] = "j";			//방입장 소문자
+	constexpr char ROOMENTER[] = "J";			//방입장
 
-	constexpr char EXIT[] = "X";				//종료 대문자
-	constexpr char EXIT_S[] = "x";				//종료 소문자
+	constexpr char EXIT[] = "X";				//종료
 
-	constexpr char ROOMEXIT[] = "/X";			//방 나가기 대문자
-	constexpr char ROOMEXIT_S[] = "/x";			//방 나가기 소문자
+	constexpr char ROOMEXIT[] = "/X";			//방 나가기
 }
 #endif // !DEFINE_H

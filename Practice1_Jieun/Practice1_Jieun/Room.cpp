@@ -4,7 +4,7 @@
 #include "Room.h"
 
 
-Room::Room() : m_index( -1 ), m_name( "" ), m_maxUser( 0 ), m_totalPlayers( 0 )
+Room::Room( ) : m_index( -1 ), m_name( "" ), m_maxUser( 0 ), m_totalPlayers( 0 )
 {
 }
 

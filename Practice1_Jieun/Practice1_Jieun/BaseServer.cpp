@@ -71,16 +71,16 @@ bool BaseServer::OpenServer()
     std::vector< std::thread > workerThreads;
     for (int i = 0; i < ( InitailizeServer::TOTALCORE / 2 ); ++i)
     {
-        workerThreads.emplace_back( [&]() {MainWorkProcess(); } );
+        workerThreads.emplace_back( [ & ]() { MainWorkProcess(); } );
     }
 
     ///Other Thread...
 
     ///LogOnThread - 로그인 관리 Thread
-    std::thread logonThread{ [&]() {LogOnCommandProcess();} };
+    std::thread logonThread{ [ & ]() { LogOnCommandProcess(); } };
     logonThread.join();
 
-    for (auto& wthread : workerThreads)
+    for ( auto& wthread : workerThreads )
     {
         wthread.join();
     }
@@ -106,16 +106,6 @@ bool BaseServer::InitializeCommandFunction()
     m_commandFunctions.insert({ CommandMessage::ROOMINFO,       [&](const SOCKET& socket) { RequestRoomInfo( socket ); } });
     m_commandFunctions.insert({ CommandMessage::SECRETMESSAGE,  [&](const SOCKET& socket) { RequestNote( socket ); } });
 
-    ///소문자 명령어
-    m_commandFunctions.insert({ CommandMessage::COMMANDLIST_S,    [&](const SOCKET& socket) { ReqeustCommandList(socket);} });
-    m_commandFunctions.insert({ CommandMessage::USERLIST_S,       [&](const SOCKET& socket) { RequestUserList(socket); } });
-    m_commandFunctions.insert({ CommandMessage::EXIT_S,           [&](const SOCKET& socket) { RequestExit(socket); } });
-    m_commandFunctions.insert({ CommandMessage::ROOMCREATE_S,     [&](const SOCKET& socket) { RequestRoomCreate(socket); } });
-    m_commandFunctions.insert({ CommandMessage::ROOMLIST_S,       [&](const SOCKET& socket) { RequestRoomList(socket); } });
-    m_commandFunctions.insert({ CommandMessage::ROOMENTER_S,      [&](const SOCKET& socket) { RequestRoomEnter(socket); } });
-    m_commandFunctions.insert({ CommandMessage::PLAYERINFO_S,     [&](const SOCKET& socket) { RequestUserInfo(socket); } });
-    m_commandFunctions.insert({ CommandMessage::ROOMINFO_S,       [&](const SOCKET& socket) { RequestRoomInfo(socket); } });
-    m_commandFunctions.insert({ CommandMessage::SECRETMESSAGE_S,  [&](const SOCKET& socket) { RequestNote(socket); } });
     return true;
 }
 
@@ -298,7 +288,7 @@ bool BaseServer::StateWorkBranch( const SOCKET& socket, const std::string_view& 
         m_playersLock.unlock();
 
         std::string_view checkCommand = { command.cbegin(), command.cbegin() + sizeof( CommandMessage::LOGON ) - 1 };
-        if ( checkCommand == CommandMessage::LOGON || checkCommand == CommandMessage::LOGON_S)
+        if ( checkCommand == CommandMessage::LOGON)
         {
             m_logOn.push( socket );
         }
@@ -395,7 +385,7 @@ bool BaseServer::CommandWorkBranch( const SOCKET& socket, const std::string_view
             {
                 m_commandFunctions[checkCommand1Word]( socket );
                 
-                if (request == CommandMessage::EXIT || request == CommandMessage::EXIT_S)
+                if (request == CommandMessage::EXIT)
                     return true;
 
                 player.StartLock();
